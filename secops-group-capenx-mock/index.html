@@ -243,7 +243,7 @@ If a byte read is correct, it triggers a <code>type 2</code> output; otherwise, 
 <p>Supposing the flag is set to <code>135</code>, the animation below illustrates how the brute force method operates.</p>
 <p><img src="/images/capenx-attacks.gif" alt="Attack"></p>
 <p>From the example, the situation may be similar when attempting to read the flag, where the character set is defined as follows:</p>
-<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">a-z, A-Z, 0-9, &#x3C;space>{}-_</span></span></code></pre>
+<pre is:raw="" class="astro-code" style="background-color: #272822; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;"><code><span class="line"><span style="color: #F8F8F2">a-z A-Z 0-9 &#x3C;space> { } - _</span></span></code></pre>
 <h2 id="payload">Payload</h2>
 <p>From the previous section, the payload should be capable of reading the flag byte by byte.
 Since the backend is developed in PHP (index.php), it is possible to use an inline command to accomplish this.
